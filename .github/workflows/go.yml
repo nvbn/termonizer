@@ -22,7 +22,7 @@ jobs:
         go-version: '1.23'
 
     - name: Build
-      run: go build -v ./...
+      run: go build cmd/termonizer/main.go
 
     - name: Test
       run: go test -v ./...
