@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Goals struct {
+type Goal struct {
 	ID      string
 	Period  Period
 	Content string
@@ -16,7 +16,7 @@ type Goals struct {
 	Updated time.Time
 }
 
-func (g *Goals) Title() string {
+func (g *Goal) Title() string {
 	switch g.Period {
 	case Year:
 		return g.Start.Format("2006")
@@ -38,14 +38,14 @@ func (g *Goals) Title() string {
 }
 
 type goalsStorage interface {
-	Read(ctx context.Context) ([]Goals, error)
-	Update(ctx context.Context, goals Goals) error
+	Read(ctx context.Context) ([]Goal, error)
+	Update(ctx context.Context, goals Goal) error
 }
 
 type GoalsRepository struct {
 	timeNow  func() time.Time
 	storage  goalsStorage
-	byPeriod map[Period][]Goals
+	byPeriod map[Period][]Goal
 }
 
 func NewGoalsRepository(ctx context.Context, timeNow func() time.Time, storage goalsStorage) (*GoalsRepository, error) {
@@ -55,7 +55,7 @@ func NewGoalsRepository(ctx context.Context, timeNow func() time.Time, storage g
 		return nil, fmt.Errorf("failed to read goals: %w", err)
 	}
 
-	byPeriod := make(map[Period][]Goals)
+	byPeriod := make(map[Period][]Goal)
 	for _, goal := range goals {
 		byPeriod[goal.Period] = append(byPeriod[goal.Period], goal)
 	}
@@ -73,7 +73,7 @@ func (r *GoalsRepository) padYear() error {
 		if err != nil {
 			return fmt.Errorf("unexpected error: %w", err)
 		}
-		r.byPeriod[Year] = append(r.byPeriod[Year], Goals{
+		r.byPeriod[Year] = append(r.byPeriod[Year], Goal{
 			ID:      uuid.New().String(),
 			Period:  Year,
 			Content: "",
@@ -96,7 +96,7 @@ func (r *GoalsRepository) padQuarter() {
 
 	if lastQuarter < currentQuarter {
 		currentQuarterStartDate := time.Date(r.timeNow().Year(), time.Month(currentQuarter*3-2), 1, 0, 0, 0, 0, time.Local)
-		r.byPeriod[Quarter] = append(r.byPeriod[Quarter], Goals{
+		r.byPeriod[Quarter] = append(r.byPeriod[Quarter], Goal{
 			ID:      uuid.New().String(),
 			Period:  Quarter,
 			Content: "",
@@ -122,7 +122,7 @@ func (r *GoalsRepository) padWeek() {
 		weekDay -= 1
 
 		currentWeekStartDate := r.timeNow().AddDate(0, 0, -int(weekDay))
-		r.byPeriod[Week] = append(r.byPeriod[Week], Goals{
+		r.byPeriod[Week] = append(r.byPeriod[Week], Goal{
 			ID:      uuid.New().String(),
 			Period:  Week,
 			Content: "",
@@ -134,7 +134,7 @@ func (r *GoalsRepository) padWeek() {
 
 func (r *GoalsRepository) padDay() {
 	if len(r.byPeriod[Day]) == 0 || r.byPeriod[Day][len(r.byPeriod[Day])-1].Start.Day() < r.timeNow().Day() {
-		r.byPeriod[Day] = append(r.byPeriod[Day], Goals{
+		r.byPeriod[Day] = append(r.byPeriod[Day], Goal{
 			ID:      uuid.New().String(),
 			Period:  Day,
 			Content: "",
@@ -144,7 +144,7 @@ func (r *GoalsRepository) padDay() {
 	}
 }
 
-func (r *GoalsRepository) FindByPeriod(period Period) ([]Goals, error) {
+func (r *GoalsRepository) FindByPeriod(period Period) ([]Goal, error) {
 	switch period {
 	case Year:
 		if err := r.padYear(); err != nil {
@@ -165,6 +165,6 @@ func (r *GoalsRepository) FindByPeriod(period Period) ([]Goals, error) {
 	panic("Unknown period")
 }
 
-func (r *GoalsRepository) Update(ctx context.Context, goals Goals) error {
+func (r *GoalsRepository) Update(ctx context.Context, goals Goal) error {
 	return r.storage.Update(ctx, goals)
 }

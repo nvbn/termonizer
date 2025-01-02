@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func makePanel(name string, goals []model.Goals, onChange func(goals model.Goals)) tview.Primitive {
+func makePanel(name string, goals []model.Goal, onChange func(goals model.Goal)) tview.Primitive {
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	container.SetBorder(true).SetTitle(name)
@@ -27,8 +27,8 @@ func makePanel(name string, goals []model.Goals, onChange func(goals model.Goals
 }
 
 type goalsProvider interface {
-	FindByPeriod(period model.Period) ([]model.Goals, error)
-	Update(ctx context.Context, goals model.Goals) error
+	FindByPeriod(period model.Period) ([]model.Goal, error)
+	Update(ctx context.Context, goals model.Goal) error
 }
 
 func Show(ctx context.Context, goalsRepository goalsProvider) error {
@@ -43,7 +43,7 @@ func Show(ctx context.Context, goalsRepository goalsProvider) error {
 			return err
 		}
 		container.AddItem(
-			makePanel(model.PeriodName(period), goals, func(goals model.Goals) {
+			makePanel(model.PeriodName(period), goals, func(goals model.Goal) {
 				if err := goalsRepository.Update(ctx, goals); err != nil {
 					panic(err)
 				}

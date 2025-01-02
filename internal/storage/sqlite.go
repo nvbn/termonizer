@@ -42,7 +42,7 @@ func (s *SQLite) initSchema(ctx context.Context) error {
 	return err
 }
 
-func (s *SQLite) Read(ctx context.Context) ([]model.Goals, error) {
+func (s *SQLite) Read(ctx context.Context) ([]model.Goal, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		select
 		    id,
@@ -58,9 +58,9 @@ func (s *SQLite) Read(ctx context.Context) ([]model.Goals, error) {
 	}
 	defer rows.Close()
 
-	result := make([]model.Goals, 0)
+	result := make([]model.Goal, 0)
 	for rows.Next() {
-		goals := model.Goals{}
+		goals := model.Goal{}
 		if err := rows.Scan(
 			&goals.ID,
 			&goals.Period,
@@ -76,7 +76,7 @@ func (s *SQLite) Read(ctx context.Context) ([]model.Goals, error) {
 	return result, nil
 }
 
-func (s *SQLite) Update(ctx context.Context, goals model.Goals) error {
+func (s *SQLite) Update(ctx context.Context, goals model.Goal) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		`

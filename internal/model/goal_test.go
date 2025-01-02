@@ -8,13 +8,13 @@ import (
 )
 
 func TestGoals_Title(t *testing.T) {
-	makeGoal := func(period Period, start string) Goals {
+	makeGoal := func(period Period, start string) Goal {
 		parsed, err := time.Parse("2006-01-02", start)
 		if err != nil {
 			t.Error("unexpected error:", err)
 		}
 
-		return Goals{
+		return Goal{
 			Period:  period,
 			Content: "",
 			Start:   parsed,
@@ -22,7 +22,7 @@ func TestGoals_Title(t *testing.T) {
 		}
 	}
 
-	goalsToExpectedTitle := map[Goals]string{
+	goalsToExpectedTitle := map[Goal]string{
 		makeGoal(Year, "2024-12-10"):    "2024",
 		makeGoal(Quarter, "2024-12-10"): "2024 Q4",
 		makeGoal(Week, "2024-12-10"):    "2024-12-10 (50)",
@@ -40,11 +40,11 @@ func TestGoals_Title(t *testing.T) {
 
 type goalsStorageMock struct{}
 
-func (m *goalsStorageMock) Read(ctx context.Context) ([]Goals, error) {
-	return make([]Goals, 0), nil
+func (m *goalsStorageMock) Read(ctx context.Context) ([]Goal, error) {
+	return make([]Goal, 0), nil
 }
 
-func (s *goalsStorageMock) Update(ctx context.Context, goals Goals) error {
+func (s *goalsStorageMock) Update(ctx context.Context, goals Goal) error {
 	return nil
 }
 
