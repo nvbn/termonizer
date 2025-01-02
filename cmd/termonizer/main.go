@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/nvbn/termonizer/internal/model"
+	"github.com/nvbn/termonizer/internal/repository"
 	"github.com/nvbn/termonizer/internal/storage"
 	"github.com/nvbn/termonizer/internal/ui"
 	"os"
@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 	defer goalsStorage.Close()
-	goalsRepository, err := model.NewGoalsRepository(ctx, time.Now, goalsStorage)
+	goalsRepository, err := repository.NewGoalsRepository(ctx, time.Now, goalsStorage)
 	if err != nil {
 		panic(err)
 	}
