@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"github.com/nvbn/termonizer/internal/model"
+	"github.com/nvbn/termonizer/internal/ui"
+	"time"
+)
 
 func main() {
-	fmt.Println("termonizer")
+	goalsRepository := model.NewGoalsRepository(time.Now)
+	ui.Show(goalsRepository)
 }
