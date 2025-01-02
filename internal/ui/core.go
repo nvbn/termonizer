@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
 	"time"
@@ -12,7 +13,7 @@ func makePanel(name string, goals []model.Goals, onChange func(goals model.Goals
 	container.SetBorder(true).SetTitle(name)
 
 	for _, goal := range goals {
-		input := tview.NewTextArea().SetText(goal.Content, true)
+		input := tview.NewTextArea().SetText(goal.Content, false)
 		input.SetTitle(goal.Title()).SetTitle(goal.Title()).SetBorder(true)
 		input.SetChangedFunc(func() {
 			goal.Content = input.GetText()
@@ -27,9 +28,10 @@ func makePanel(name string, goals []model.Goals, onChange func(goals model.Goals
 
 type goalsProvider interface {
 	FindByPeriod(period model.Period) ([]model.Goals, error)
+	Update(ctx context.Context, goals model.Goals) error
 }
 
-func Show(goalsRepository goalsProvider) error {
+func Show(ctx context.Context, goalsRepository goalsProvider) error {
 	app := tview.NewApplication()
 
 	container := tview.NewFlex().
@@ -41,7 +43,11 @@ func Show(goalsRepository goalsProvider) error {
 			return err
 		}
 		container.AddItem(
-			makePanel(model.PeriodName(period), goals),
+			makePanel(model.PeriodName(period), goals, func(goals model.Goals) {
+				if err := goalsRepository.Update(ctx, goals); err != nil {
+					panic(err)
+				}
+			}),
 			0, 1, false,
 		)
 	}

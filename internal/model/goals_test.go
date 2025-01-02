@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -39,18 +40,20 @@ func TestGoals_Title(t *testing.T) {
 
 type goalsStorageMock struct{}
 
-func (m *goalsStorageMock) Read() (map[Period][]Goals, error) {
-	return make(map[Period][]Goals), nil
+func (m *goalsStorageMock) Read(ctx context.Context) ([]Goals, error) {
+	return make([]Goals, 0), nil
 }
 
-func (m *goalsStorageMock) Write(map[Period][]Goals) error {
+func (s *goalsStorageMock) Update(ctx context.Context, goals Goals) error {
 	return nil
 }
 
 func TestGoalsRepository_FindByPeriod_Padding(t *testing.T) {
-	r, err := NewGoalsRepository(func() time.Time {
-		return time.Date(2024, 12, 10, 0, 0, 0, 0, time.Local)
-	}, &goalsStorageMock{})
+	r, err := NewGoalsRepository(
+		context.Background(),
+		func() time.Time {
+			return time.Date(2024, 12, 10, 0, 0, 0, 0, time.Local)
+		}, &goalsStorageMock{})
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/utils"
@@ -37,8 +38,8 @@ func (g *Goals) Title() string {
 }
 
 type goalsStorage interface {
-	Read() (map[Period][]Goals, error)
-	Write(map[Period][]Goals) error
+	Read(ctx context.Context) ([]Goals, error)
+	Update(ctx context.Context, goals Goals) error
 }
 
 type GoalsRepository struct {
@@ -47,16 +48,22 @@ type GoalsRepository struct {
 	byPeriod map[Period][]Goals
 }
 
-func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) (*GoalsRepository, error) {
-	goals, err := storage.Read()
+func NewGoalsRepository(ctx context.Context, timeNow func() time.Time, storage goalsStorage) (*GoalsRepository, error) {
+	// make it explicit?
+	goals, err := storage.Read(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read goals: %w", err)
+	}
+
+	byPeriod := make(map[Period][]Goals)
+	for _, goal := range goals {
+		byPeriod[goal.Period] = append(byPeriod[goal.Period], goal)
 	}
 
 	return &GoalsRepository{
 		timeNow:  timeNow,
 		storage:  storage,
-		byPeriod: goals,
+		byPeriod: byPeriod,
 	}, nil
 }
 
@@ -158,6 +165,6 @@ func (r *GoalsRepository) FindByPeriod(period Period) ([]Goals, error) {
 	panic("Unknown period")
 }
 
-func (r *GoalsRepository) Sync() error {
-	return r.storage.Write(r.byPeriod)
+func (r *GoalsRepository) Update(ctx context.Context, goals Goals) error {
+	return r.storage.Update(ctx, goals)
 }

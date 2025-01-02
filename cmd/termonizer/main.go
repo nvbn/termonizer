@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/nvbn/termonizer/internal/storage"
 	"github.com/nvbn/termonizer/internal/ui"
@@ -9,22 +10,18 @@ import (
 )
 
 func main() {
-	storagePath := os.ExpandEnv("${HOME}/.termonizer.json")
-	goalsStorage := storage.NewJSON(storagePath)
-	goalsRepository, err := model.NewGoalsRepository(time.Now, goalsStorage)
+	ctx := context.Background()
+	storagePath := os.ExpandEnv("${HOME}/.termonizer.db")
+	goalsStorage, err := storage.NewSQLite(ctx, storagePath)
 	if err != nil {
 		panic(err)
 	}
-	ticker := time.NewTicker(5 * time.Second)
-	go func() {
-		for {
-			<-ticker.C
-			if err := goalsRepository.Sync(); err != nil {
-				panic(err)
-			}
-		}
-	}()
-	if err = ui.Show(goalsRepository); err != nil {
+	defer goalsStorage.Close()
+	goalsRepository, err := model.NewGoalsRepository(ctx, time.Now, goalsStorage)
+	if err != nil {
+		panic(err)
+	}
+	if err = ui.Show(ctx, goalsRepository); err != nil {
 		panic(err)
 	}
 }
