@@ -3,9 +3,10 @@ package ui
 import (
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
+	"time"
 )
 
-func makePanel(name string, goals []model.Goals) tview.Primitive {
+func makePanel(name string, goals []model.Goals, onChange func(goals model.Goals)) tview.Primitive {
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	container.SetBorder(true).SetTitle(name)
@@ -13,6 +14,11 @@ func makePanel(name string, goals []model.Goals) tview.Primitive {
 	for _, goal := range goals {
 		input := tview.NewTextArea().SetText(goal.Content, true)
 		input.SetTitle(goal.Title()).SetTitle(goal.Title()).SetBorder(true)
+		input.SetChangedFunc(func() {
+			goal.Content = input.GetText()
+			goal.Updated = time.Now()
+			onChange(goal)
+		})
 		container.AddItem(input, 0, 1, false)
 	}
 

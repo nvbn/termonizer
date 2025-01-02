@@ -37,10 +37,23 @@ func TestGoals_Title(t *testing.T) {
 	}
 }
 
+type goalsStorageMock struct{}
+
+func (m *goalsStorageMock) Read() (map[Period][]Goals, error) {
+	return make(map[Period][]Goals), nil
+}
+
+func (m *goalsStorageMock) Write(map[Period][]Goals) error {
+	return nil
+}
+
 func TestGoalsRepository_FindByPeriod_Padding(t *testing.T) {
-	r := NewGoalsRepository(func() time.Time {
+	r, err := NewGoalsRepository(func() time.Time {
 		return time.Date(2024, 12, 10, 0, 0, 0, 0, time.Local)
-	})
+	}, &goalsStorageMock{})
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
 
 	periodToExpectedGoalTitle := map[Period]string{
 		Year:    "2024",

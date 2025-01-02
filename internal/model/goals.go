@@ -2,11 +2,13 @@ package model
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/utils"
 	"time"
 )
 
 type Goals struct {
+	ID      string
 	Period  Period
 	Content string
 	Start   time.Time
@@ -34,29 +36,38 @@ func (g *Goals) Title() string {
 	panic("Unknown period")
 }
 
-type GoalsRepository struct {
-	timeNow func() time.Time
-
-	ByPeriod map[Period][]Goals
+type goalsStorage interface {
+	Read() (map[Period][]Goals, error)
+	Write(map[Period][]Goals) error
 }
 
-func NewGoalsRepository(timeNow func() time.Time) *GoalsRepository {
-	// TODO: read from file!
+type GoalsRepository struct {
+	timeNow  func() time.Time
+	storage  goalsStorage
+	byPeriod map[Period][]Goals
+}
+
+func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) (*GoalsRepository, error) {
+	goals, err := storage.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read goals: %w", err)
+	}
+
 	return &GoalsRepository{
 		timeNow:  timeNow,
-		ByPeriod: make(map[Period][]Goals),
-	}
+		storage:  storage,
+		byPeriod: goals,
+	}, nil
 }
 
-//func (r *GoalsRepository) allDatesForYear()
-
 func (r *GoalsRepository) padYear() error {
-	if len(r.ByPeriod[Year]) == 0 || r.ByPeriod[Year][len(r.ByPeriod[Year])-1].Start.Year() < r.timeNow().Year() {
+	if len(r.byPeriod[Year]) == 0 || r.byPeriod[Year][len(r.byPeriod[Year])-1].Start.Year() < r.timeNow().Year() {
 		start, err := time.Parse("2006", r.timeNow().Format("2006"))
 		if err != nil {
 			return fmt.Errorf("unexpected error: %w", err)
 		}
-		r.ByPeriod[Year] = append(r.ByPeriod[Year], Goals{
+		r.byPeriod[Year] = append(r.byPeriod[Year], Goals{
+			ID:      uuid.New().String(),
 			Period:  Year,
 			Content: "",
 			Start:   start,
@@ -69,8 +80,8 @@ func (r *GoalsRepository) padYear() error {
 
 func (r *GoalsRepository) padQuarter() {
 	lastQuarter := -1
-	if len(r.ByPeriod[Quarter]) > 0 {
-		lastGoals := r.ByPeriod[Quarter][len(r.ByPeriod[Quarter])-1]
+	if len(r.byPeriod[Quarter]) > 0 {
+		lastGoals := r.byPeriod[Quarter][len(r.byPeriod[Quarter])-1]
 		lastQuarter = utils.QuarterFromTime(lastGoals.Start)
 	}
 
@@ -78,7 +89,8 @@ func (r *GoalsRepository) padQuarter() {
 
 	if lastQuarter < currentQuarter {
 		currentQuarterStartDate := time.Date(r.timeNow().Year(), time.Month(currentQuarter*3-2), 1, 0, 0, 0, 0, time.Local)
-		r.ByPeriod[Quarter] = append(r.ByPeriod[Quarter], Goals{
+		r.byPeriod[Quarter] = append(r.byPeriod[Quarter], Goals{
+			ID:      uuid.New().String(),
 			Period:  Quarter,
 			Content: "",
 			Start:   currentQuarterStartDate,
@@ -89,8 +101,8 @@ func (r *GoalsRepository) padQuarter() {
 
 func (r *GoalsRepository) padWeek() {
 	lastWeek := -1
-	if len(r.ByPeriod[Week]) > 0 {
-		lastGoals := r.ByPeriod[Week][len(r.ByPeriod[Week])-1]
+	if len(r.byPeriod[Week]) > 0 {
+		lastGoals := r.byPeriod[Week][len(r.byPeriod[Week])-1]
 		_, lastWeek = lastGoals.Start.ISOWeek()
 	}
 
@@ -103,7 +115,8 @@ func (r *GoalsRepository) padWeek() {
 		weekDay -= 1
 
 		currentWeekStartDate := r.timeNow().AddDate(0, 0, -int(weekDay))
-		r.ByPeriod[Week] = append(r.ByPeriod[Week], Goals{
+		r.byPeriod[Week] = append(r.byPeriod[Week], Goals{
+			ID:      uuid.New().String(),
 			Period:  Week,
 			Content: "",
 			Start:   currentWeekStartDate,
@@ -113,8 +126,9 @@ func (r *GoalsRepository) padWeek() {
 }
 
 func (r *GoalsRepository) padDay() {
-	if len(r.ByPeriod[Day]) == 0 || r.ByPeriod[Day][len(r.ByPeriod[Day])-1].Start.Day() < r.timeNow().Day() {
-		r.ByPeriod[Day] = append(r.ByPeriod[Day], Goals{
+	if len(r.byPeriod[Day]) == 0 || r.byPeriod[Day][len(r.byPeriod[Day])-1].Start.Day() < r.timeNow().Day() {
+		r.byPeriod[Day] = append(r.byPeriod[Day], Goals{
+			ID:      uuid.New().String(),
 			Period:  Day,
 			Content: "",
 			Start:   r.timeNow(),
@@ -129,17 +143,21 @@ func (r *GoalsRepository) FindByPeriod(period Period) ([]Goals, error) {
 		if err := r.padYear(); err != nil {
 			return nil, err
 		}
-		return r.ByPeriod[period], nil
+		return r.byPeriod[period], nil
 	case Quarter:
 		r.padQuarter()
-		return r.ByPeriod[period], nil
+		return r.byPeriod[period], nil
 	case Week:
 		r.padWeek()
-		return r.ByPeriod[period], nil
+		return r.byPeriod[period], nil
 	case Day:
 		r.padDay()
-		return r.ByPeriod[period], nil
+		return r.byPeriod[period], nil
 	}
 
 	panic("Unknown period")
+}
+
+func (r *GoalsRepository) Sync() error {
+	return r.storage.Write(r.byPeriod)
 }
