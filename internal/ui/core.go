@@ -26,12 +26,12 @@ func makePanel(name string, goals []model.Goal, onChange func(goals model.Goal))
 	return container
 }
 
-type goalsProvider interface {
+type goalsRepository interface {
 	FindByPeriod(period model.Period) ([]model.Goal, error)
 	Update(ctx context.Context, goals model.Goal) error
 }
 
-func Show(ctx context.Context, goalsRepository goalsProvider) error {
+func Show(ctx context.Context, goalsRepository goalsRepository) error {
 	app := tview.NewApplication()
 
 	container := tview.NewFlex().
