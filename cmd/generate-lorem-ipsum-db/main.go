@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/nvbn/termonizer/internal/storage"
+	"github.com/nvbn/termonizer/internal/utils"
 	"math/rand"
 	"os"
 	"strconv"
@@ -135,6 +136,7 @@ func generateContent() string {
 
 func generateYears() []model.Goal {
 	out := make([]model.Goal, 0)
+
 	current := time.Now().Year()
 	for year := current - 3; year <= current; year++ {
 		start, err := time.Parse("2006", strconv.Itoa(year))
@@ -149,15 +151,21 @@ func generateYears() []model.Goal {
 			Updated: start,
 		})
 	}
+
 	return out
 }
 
 func generateQuarters() []model.Goal {
 	out := make([]model.Goal, 0)
+
 	current := time.Now().Year()
 	for year := current - 3; year <= current; year++ {
 		for quarter := 1; quarter <= 4; quarter++ {
 			start := time.Date(year, time.Month(quarter*3-2), 1, 0, 0, 0, 0, time.Local)
+			if start.After(time.Now()) {
+				break
+			}
+
 			out = append(out, model.Goal{
 				ID:      uuid.New().String(),
 				Period:  model.Quarter,
@@ -167,6 +175,56 @@ func generateQuarters() []model.Goal {
 			})
 		}
 	}
+
+	return out
+}
+
+func generateWeeks() []model.Goal {
+	out := make([]model.Goal, 0)
+
+	start := time.Date(time.Now().Year()-3, 1, 1, 0, 0, 0, 0, time.Local)
+	start = utils.WeekStart(start)
+	for {
+		if start.After(time.Now()) {
+			break
+		}
+
+		if start.Weekday() == time.Sunday || start.Weekday() == time.Saturday {
+			continue
+		}
+
+		out = append(out, model.Goal{
+			ID:      uuid.New().String(),
+			Period:  model.Week,
+			Content: generateContent(),
+			Start:   start,
+			Updated: start,
+		})
+		start = start.AddDate(0, 0, 7)
+	}
+
+	return out
+}
+
+func generateDays() []model.Goal {
+	out := make([]model.Goal, 0)
+
+	start := time.Now().AddDate(-3, 0, 0)
+	for {
+		if start.After(time.Now()) {
+			break
+		}
+
+		out = append(out, model.Goal{
+			ID:      uuid.New().String(),
+			Period:  model.Day,
+			Content: generateContent(),
+			Start:   start,
+			Updated: start,
+		})
+		start = start.AddDate(0, 0, 1)
+	}
+
 	return out
 }
 
@@ -190,6 +248,18 @@ func main() {
 	}
 
 	for _, goal := range generateQuarters() {
+		if err := goalsStorage.Update(ctx, goal); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, goal := range generateWeeks() {
+		if err := goalsStorage.Update(ctx, goal); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, goal := range generateDays() {
 		if err := goalsStorage.Update(ctx, goal); err != nil {
 			panic(err)
 		}

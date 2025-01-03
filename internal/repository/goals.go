@@ -87,18 +87,11 @@ func (r *Goals) padWeek() {
 
 	_, currentWeek := r.timeNow().ISOWeek()
 	if lastWeek < currentWeek {
-		weekDay := r.timeNow().Weekday()
-		if weekDay == time.Sunday {
-			weekDay = 7
-		}
-		weekDay -= 1
-
-		currentWeekStartDate := r.timeNow().AddDate(0, 0, -int(weekDay))
 		r.byPeriod[model.Week] = append(r.byPeriod[model.Week], model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Week,
 			Content: "",
-			Start:   currentWeekStartDate,
+			Start:   utils.WeekStart(r.timeNow()),
 			Updated: r.timeNow(),
 		})
 	}
