@@ -9,23 +9,26 @@ import (
 
 type storageMock struct{}
 
-func (m *storageMock) Read(ctx context.Context) ([]model.Goal, error) {
+func (m *storageMock) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, error) {
 	return make([]model.Goal, 0), nil
 }
 
-func (s *storageMock) Update(ctx context.Context, goals model.Goal) error {
+func (m *storageMock) Update(ctx context.Context, goals model.Goal) error {
 	return nil
 }
 
-func TestGoalsRepository_FindByPeriod_Padding(t *testing.T) {
-	r, err := NewGoalsRepository(
-		context.Background(),
+func (m *storageMock) CountForPeriod(ctx context.Context, period int) (int, error) {
+	return 0, nil
+}
+
+func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
+	ctx := context.Background()
+
+	r := NewGoalsRepository(
 		func() time.Time {
 			return time.Date(2024, 12, 10, 0, 0, 0, 0, time.Local)
-		}, &storageMock{})
-	if err != nil {
-		t.Error("unexpected error:", err)
-	}
+		},
+		&storageMock{})
 
 	periodToExpectedGoalTitle := map[model.Period]string{
 		model.Year:    "2024",
@@ -36,7 +39,7 @@ func TestGoalsRepository_FindByPeriod_Padding(t *testing.T) {
 
 	for period, expectedTitle := range periodToExpectedGoalTitle {
 		t.Run(model.PeriodName(period), func(t *testing.T) {
-			actualTitle, err := r.FindByPeriod(period)
+			actualTitle, err := r.FindForPeriod(ctx, period)
 			if err != nil {
 				t.Error("unexpected error:", err)
 			}

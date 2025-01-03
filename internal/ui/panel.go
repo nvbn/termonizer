@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
 	"time"
@@ -14,43 +15,67 @@ var periodToAmount = map[model.Period]int{
 }
 
 type Panel struct {
-	period    model.Period
-	goals     []model.Goal
-	onChange  func(goals model.Goal)
-	container *tview.Flex
-	offset    int
+	period          model.Period
+	goalsRepository goalsRepository
+	container       *tview.Flex
+	offset          int
 }
 
-func newPanel(period model.Period, goals []model.Goal, onChange func(goals model.Goal)) *Panel {
+func newPanel(ctx context.Context, period model.Period, goalsRepository goalsRepository) *Panel {
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
 	container.SetBorder(true).SetTitle(model.PeriodName(period))
 
 	panel := &Panel{
-		goals:     goals,
-		onChange:  onChange,
-		container: container,
-		offset:    0,
-		period:    period,
+		container:       container,
+		offset:          0,
+		period:          period,
+		goalsRepository: goalsRepository,
 	}
 
-	panel.render()
+	panel.render(ctx)
 
 	return panel
 }
 
-func (p *Panel) render() {
-	p.container.Clear()
-
-	after := tview.NewButton("after")
-	after.SetSelectedFunc(func() {
+func (p *Panel) scrollAfterHandler(ctx context.Context) func() {
+	return func() {
 		if p.offset-1 >= 0 {
 			p.offset -= 1
 		}
-		p.render()
-	})
+		if err := p.render(ctx); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (p *Panel) scrollBeforeHandler(ctx context.Context) func() {
+	return func() {
+		amount, err := p.goalsRepository.CountForPeriod(ctx, p.period)
+		if err != nil {
+			panic(err)
+		}
+
+		if p.offset+1 <= (amount - periodToAmount[p.period]) {
+			p.offset += 1
+		}
+		if err := p.render(ctx); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (p *Panel) render(ctx context.Context) error {
+	p.container.Clear()
+
+	goals, err := p.goalsRepository.FindForPeriod(ctx, p.period)
+	if err != nil {
+		return err
+	}
+
+	after := tview.NewButton("after")
+	after.SetSelectedFunc(p.scrollAfterHandler(ctx))
 	p.container.AddItem(after, 1, 1, false)
 
-	goals := p.goals
 	if p.offset+periodToAmount[p.period] <= len(goals) {
 		goals = goals[p.offset : p.offset+periodToAmount[p.period]]
 	}
@@ -61,17 +86,14 @@ func (p *Panel) render() {
 		input.SetChangedFunc(func() {
 			goal.Content = input.GetText()
 			goal.Updated = time.Now()
-			p.onChange(goal)
+			p.goalsRepository.Update(ctx, goal)
 		})
 		p.container.AddItem(input, 0, 1, false)
 	}
 
 	before := tview.NewButton("before")
-	before.SetSelectedFunc(func() {
-		if p.offset+1 <= (len(p.goals) - periodToAmount[p.period]) {
-			p.offset += 1
-		}
-		p.render()
-	})
+	before.SetSelectedFunc(p.scrollBeforeHandler(ctx))
 	p.container.AddItem(before, 1, 1, false)
+
+	return nil
 }

@@ -7,7 +7,8 @@ import (
 )
 
 type goalsRepository interface {
-	FindByPeriod(period model.Period) ([]model.Goal, error)
+	FindForPeriod(ctx context.Context, period model.Period) ([]model.Goal, error)
+	CountForPeriod(ctx context.Context, period model.Period) (int, error)
 	Update(ctx context.Context, goals model.Goal) error
 }
 
@@ -17,15 +18,7 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 	container := tview.NewFlex().SetDirection(tview.FlexColumn)
 
 	for _, period := range model.Periods {
-		goals, err := goalsRepository.FindByPeriod(period)
-		if err != nil {
-			return err
-		}
-		panel := newPanel(period, goals, func(goals model.Goal) {
-			if err := goalsRepository.Update(ctx, goals); err != nil {
-				panic(err)
-			}
-		})
+		panel := newPanel(ctx, period, goalsRepository)
 		container.AddItem(
 			panel.container,
 			0, 1, false,

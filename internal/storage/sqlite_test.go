@@ -17,7 +17,7 @@ func TestSQLite(t *testing.T) {
 	}
 	defer s.Close()
 
-	goals, err := s.Read(ctx)
+	goals, err := s.ReadForPeriod(ctx, 0)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
@@ -33,7 +33,7 @@ func TestSQLite(t *testing.T) {
 
 	goal := model.Goal{
 		ID:      uuid.New().String(),
-		Period:  model.Year,
+		Period:  0,
 		Content: "",
 		Start:   date,
 		Updated: date,
@@ -43,12 +43,21 @@ func TestSQLite(t *testing.T) {
 		t.Error("unexpected error:", err)
 	}
 
-	goals, err = s.Read(ctx)
+	goals, err = s.ReadForPeriod(ctx, 0)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
 	if !reflect.DeepEqual(goals, []model.Goal{goal}) {
 		t.Errorf("expected %v, got %v", []model.Goal{goal}, goals)
+	}
+
+	amount, err := s.CountForPeriod(ctx, 0)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	if amount != 1 {
+		t.Errorf("expected 1, got %d", amount)
 	}
 }

@@ -21,10 +21,7 @@ func main() {
 		panic(err)
 	}
 	defer goalsStorage.Close()
-	goalsRepository, err := repository.NewGoalsRepository(ctx, time.Now, goalsStorage)
-	if err != nil {
-		panic(err)
-	}
+	goalsRepository := repository.NewGoalsRepository(time.Now, goalsStorage)
 	if err = ui.Show(ctx, goalsRepository); err != nil {
 		panic(err)
 	}

@@ -42,7 +42,7 @@ func (s *SQLite) initSchema(ctx context.Context) error {
 	return err
 }
 
-func (s *SQLite) Read(ctx context.Context) ([]model.Goal, error) {
+func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		select
 		    id,
@@ -51,8 +51,9 @@ func (s *SQLite) Read(ctx context.Context) ([]model.Goal, error) {
 		    start,
 		    updated
 		from Goals
+		where period = ?
 		order by start desc
-	`)
+	`, period)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query: %w", err)
 	}
@@ -74,6 +75,17 @@ func (s *SQLite) Read(ctx context.Context) ([]model.Goal, error) {
 	}
 
 	return result, nil
+}
+
+func (s *SQLite) CountForPeriod(ctx context.Context, period int) (int, error) {
+	var count int
+	if err := s.db.QueryRowContext(ctx, `
+		select count(*) from Goals where period = ?
+	`, period).Scan(&count); err != nil {
+		return 0, fmt.Errorf("failed to query: %w", err)
+	}
+
+	return count, nil
 }
 
 func (s *SQLite) Update(ctx context.Context, goals model.Goal) error {

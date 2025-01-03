@@ -10,42 +10,27 @@ import (
 )
 
 type goalsStorage interface {
-	Read(ctx context.Context) ([]model.Goal, error)
+	ReadForPeriod(ctx context.Context, period int) ([]model.Goal, error)
+	CountForPeriod(ctx context.Context, period int) (int, error)
 	Update(ctx context.Context, goals model.Goal) error
 }
 
 type Goals struct {
-	timeNow  func() time.Time
-	storage  goalsStorage
-	byPeriod map[model.Period][]model.Goal
+	timeNow func() time.Time
+	storage goalsStorage
 }
 
-func NewGoalsRepository(ctx context.Context, timeNow func() time.Time, storage goalsStorage) (*Goals, error) {
-	// make it explicit?
-	goals, err := storage.Read(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read goals: %w", err)
-	}
-
-	byPeriod := make(map[model.Period][]model.Goal)
-	for _, goal := range goals {
-		byPeriod[goal.Period] = append(byPeriod[goal.Period], goal)
-	}
-
+func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) *Goals {
 	return &Goals{
-		timeNow:  timeNow,
-		storage:  storage,
-		byPeriod: byPeriod,
-	}, nil
+		timeNow: timeNow,
+		storage: storage,
+	}
 }
 
-func (r *Goals) padYear() error {
-	if len(r.byPeriod[model.Year]) == 0 || r.byPeriod[model.Year][len(r.byPeriod[model.Year])-1].Start.Year() < r.timeNow().Year() {
-		start, err := time.Parse("2006", r.timeNow().Format("2006"))
-		if err != nil {
-			return fmt.Errorf("unexpected error: %w", err)
-		}
-		r.byPeriod[model.Year] = append(r.byPeriod[model.Year], model.Goal{
+func (r *Goals) padYear(goals []model.Goal) []model.Goal {
+	if len(goals) == 0 || goals[len(goals)-1].Start.Year() < r.timeNow().Year() {
+		start := time.Date(r.timeNow().Year(), 1, 1, 0, 0, 0, 0, time.Local)
+		goals = append(goals, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Year,
 			Content: "",
@@ -54,13 +39,13 @@ func (r *Goals) padYear() error {
 		})
 	}
 
-	return nil
+	return goals
 }
 
-func (r *Goals) padQuarter() {
+func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
 	lastQuarter := -1
-	if len(r.byPeriod[model.Quarter]) > 0 {
-		lastGoals := r.byPeriod[model.Quarter][len(r.byPeriod[model.Quarter])-1]
+	if len(goals) > 0 {
+		lastGoals := goals[len(goals)-1]
 		lastQuarter = utils.QuarterFromTime(lastGoals.Start)
 	}
 
@@ -68,7 +53,7 @@ func (r *Goals) padQuarter() {
 
 	if lastQuarter < currentQuarter {
 		currentQuarterStartDate := time.Date(r.timeNow().Year(), time.Month(currentQuarter*3-2), 1, 0, 0, 0, 0, time.Local)
-		r.byPeriod[model.Quarter] = append(r.byPeriod[model.Quarter], model.Goal{
+		goals = append(goals, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Quarter,
 			Content: "",
@@ -76,18 +61,20 @@ func (r *Goals) padQuarter() {
 			Updated: r.timeNow(),
 		})
 	}
+
+	return goals
 }
 
-func (r *Goals) padWeek() {
+func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 	lastWeek := -1
-	if len(r.byPeriod[model.Week]) > 0 {
-		lastGoals := r.byPeriod[model.Week][len(r.byPeriod[model.Week])-1]
+	if len(goals) > 0 {
+		lastGoals := goals[len(goals)-1]
 		_, lastWeek = lastGoals.Start.ISOWeek()
 	}
 
 	_, currentWeek := r.timeNow().ISOWeek()
 	if lastWeek < currentWeek {
-		r.byPeriod[model.Week] = append(r.byPeriod[model.Week], model.Goal{
+		goals = append(goals, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Week,
 			Content: "",
@@ -95,11 +82,13 @@ func (r *Goals) padWeek() {
 			Updated: r.timeNow(),
 		})
 	}
+
+	return goals
 }
 
-func (r *Goals) padDay() {
-	if len(r.byPeriod[model.Day]) == 0 || r.byPeriod[model.Day][len(r.byPeriod[model.Day])-1].Start.Day() < r.timeNow().Day() {
-		r.byPeriod[model.Day] = append(r.byPeriod[model.Day], model.Goal{
+func (r *Goals) padDay(goals []model.Goal) []model.Goal {
+	if len(goals) == 0 || goals[len(goals)-1].Start.Day() < r.timeNow().Day() {
+		goals = append(goals, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Day,
 			Content: "",
@@ -107,27 +96,32 @@ func (r *Goals) padDay() {
 			Updated: r.timeNow(),
 		})
 	}
+
+	return goals
 }
 
-func (r *Goals) FindByPeriod(period model.Period) ([]model.Goal, error) {
+func (r *Goals) FindForPeriod(ctx context.Context, period model.Period) ([]model.Goal, error) {
+	goals, err := r.storage.ReadForPeriod(ctx, period)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read goals: %w", err)
+	}
+
 	switch period {
 	case model.Year:
-		if err := r.padYear(); err != nil {
-			return nil, err
-		}
-		return r.byPeriod[period], nil
+		return r.padYear(goals), nil
 	case model.Quarter:
-		r.padQuarter()
-		return r.byPeriod[period], nil
+		return r.padQuarter(goals), nil
 	case model.Week:
-		r.padWeek()
-		return r.byPeriod[period], nil
+		return r.padWeek(goals), nil
 	case model.Day:
-		r.padDay()
-		return r.byPeriod[period], nil
+		return r.padDay(goals), nil
 	}
 
 	panic("Unknown period")
+}
+
+func (r *Goals) CountForPeriod(ctx context.Context, period model.Period) (int, error) {
+	return r.storage.CountForPeriod(ctx, period)
 }
 
 func (r *Goals) Update(ctx context.Context, goals model.Goal) error {
