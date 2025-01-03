@@ -2,15 +2,15 @@
 
 Run as dev:
 ```
-go run cmd/termonizer/main.go
+make run
 ```
 
 Test:
 ```
-go test ./...
+make test
 ```
 
-Release:
+Build:
 ```
-go build cmd/termonizer/main.go
+make build
 ```

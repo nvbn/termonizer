@@ -34,8 +34,7 @@ type goalsRepository interface {
 func Show(ctx context.Context, goalsRepository goalsRepository) error {
 	app := tview.NewApplication()
 
-	container := tview.NewFlex().
-		SetDirection(tview.FlexColumn)
+	container := tview.NewFlex().SetDirection(tview.FlexColumn)
 
 	for _, period := range model.Periods {
 		goals, err := goalsRepository.FindByPeriod(period)
