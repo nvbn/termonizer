@@ -18,6 +18,7 @@ type Panel struct {
 	period          model.Period
 	goalsRepository goalsRepository
 	container       *tview.Flex
+	goalsContainer  *tview.Flex
 	offset          int
 }
 
@@ -42,7 +43,7 @@ func (p *Panel) scrollAfterHandler(ctx context.Context) func() {
 		if p.offset-1 >= 0 {
 			p.offset -= 1
 		}
-		if err := p.render(ctx); err != nil {
+		if err := p.renderGoals(ctx); err != nil {
 			panic(err)
 		}
 	}
@@ -58,23 +59,19 @@ func (p *Panel) scrollBeforeHandler(ctx context.Context) func() {
 		if p.offset+1 <= (amount - periodToAmount[p.period]) {
 			p.offset += 1
 		}
-		if err := p.render(ctx); err != nil {
+		if err := p.renderGoals(ctx); err != nil {
 			panic(err)
 		}
 	}
 }
 
-func (p *Panel) render(ctx context.Context) error {
-	p.container.Clear()
+func (p *Panel) renderGoals(ctx context.Context) error {
+	p.goalsContainer.Clear()
 
 	goals, err := p.goalsRepository.FindForPeriod(ctx, p.period)
 	if err != nil {
 		return err
 	}
-
-	after := tview.NewButton("after")
-	after.SetSelectedFunc(p.scrollAfterHandler(ctx))
-	p.container.AddItem(after, 1, 1, false)
 
 	if p.offset+periodToAmount[p.period] <= len(goals) {
 		goals = goals[p.offset : p.offset+periodToAmount[p.period]]
@@ -88,8 +85,22 @@ func (p *Panel) render(ctx context.Context) error {
 			goal.Updated = time.Now()
 			p.goalsRepository.Update(ctx, goal)
 		})
-		p.container.AddItem(input, 0, 1, false)
+		p.goalsContainer.AddItem(input, 0, 1, false)
 	}
+
+	return nil
+}
+
+func (p *Panel) render(ctx context.Context) error {
+	after := tview.NewButton("after")
+	after.SetSelectedFunc(p.scrollAfterHandler(ctx))
+	p.container.AddItem(after, 1, 1, false)
+
+	p.goalsContainer = tview.NewFlex().SetDirection(tview.FlexRow)
+	if err := p.renderGoals(ctx); err != nil {
+		return err
+	}
+	p.container.AddItem(p.goalsContainer, 0, 1, false)
 
 	before := tview.NewButton("before")
 	before.SetSelectedFunc(p.scrollBeforeHandler(ctx))
