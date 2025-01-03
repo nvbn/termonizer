@@ -10,7 +10,7 @@ var periodToAmount = map[model.Period]int{
 	model.Year:    4,
 	model.Quarter: 4,
 	model.Week:    4,
-	model.Day:     7,
+	model.Day:     5,
 }
 
 type Panel struct {
