@@ -51,7 +51,7 @@ func (s *SQLite) Read(ctx context.Context) ([]model.Goal, error) {
 		    start,
 		    updated
 		from Goals
-		order by start
+		order by start desc
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query: %w", err)
