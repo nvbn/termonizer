@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"github.com/nvbn/termonizer/internal/repository"
 	"github.com/nvbn/termonizer/internal/storage"
 	"github.com/nvbn/termonizer/internal/ui"
@@ -9,10 +10,13 @@ import (
 	"time"
 )
 
+var dbPath = flag.String("db", "${HOME}/.termonizer.db", "path to the database")
+
 func main() {
+	flag.Parse()
+
 	ctx := context.Background()
-	storagePath := os.ExpandEnv("${HOME}/.termonizer.db")
-	goalsStorage, err := storage.NewSQLite(ctx, storagePath)
+	goalsStorage, err := storage.NewSQLite(ctx, os.ExpandEnv(*dbPath))
 	if err != nil {
 		panic(err)
 	}
