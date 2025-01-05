@@ -36,7 +36,9 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 		panels[n] = panel
 	}
 
-	if err := app.SetRoot(container, true).EnableMouse(true).Run(); err != nil {
+	lastPanel := panels[len(panels)-1]
+
+	if err := app.SetRoot(container, true).EnableMouse(true).SetFocus(lastPanel.FocusPrimitive()).Run(); err != nil {
 		return err
 	}
 

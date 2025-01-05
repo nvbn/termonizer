@@ -93,8 +93,12 @@ func newPanel(
 	return panel
 }
 
+func (p *Panel) FocusPrimitive() tview.Primitive {
+	return p.inView[p.currentFocus]
+}
+
 func (p *Panel) Focus() {
-	p.app.SetFocus(p.inView[p.currentFocus])
+	p.app.SetFocus(p.FocusPrimitive())
 }
 
 func (p *Panel) scrollToPast(ctx context.Context) {
