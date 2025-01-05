@@ -30,7 +30,7 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 			}
 		})
 		container.AddItem(
-			panel.container,
+			panel.Container(),
 			0, 1, false,
 		)
 		panels[n] = panel
@@ -38,7 +38,10 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 
 	lastPanel := panels[len(panels)-1]
 
-	if err := app.SetRoot(container, true).EnableMouse(true).SetFocus(lastPanel.FocusPrimitive()).Run(); err != nil {
+	if err := app.SetRoot(container, true).
+		EnableMouse(true).
+		SetFocus(lastPanel.FocusPrimitive()).
+		Run(); err != nil {
 		return err
 	}
 

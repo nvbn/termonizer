@@ -24,6 +24,8 @@ type Panel struct {
 	offset          int
 	inView          []tview.Primitive
 	currentFocus    int
+	focusLeft       func()
+	focusRight      func()
 }
 
 func newPanel(
@@ -44,53 +46,21 @@ func newPanel(
 		period:          period,
 		goalsRepository: goalsRepository,
 		currentFocus:    0,
+		focusLeft:       focusLeft,
+		focusRight:      focusRight,
 	}
 
-	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyLeft && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
-			focusLeft()
-			return nil
-		}
+	panel.setupHotkeys(ctx)
 
-		if event.Key() == tcell.KeyRight && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
-			focusRight()
-			return nil
-		}
-
-		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
-			panel.currentFocus = 0
-			panel.scrollNow(ctx)
-			return nil
-		}
-
-		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModAlt != 0 {
-			if panel.currentFocus == 0 {
-				panel.scrollToPast(ctx)
-			} else {
-				panel.currentFocus -= 1
-				panel.Focus()
-			}
-
-			return nil
-		}
-
-		if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
-			if panel.currentFocus == len(panel.inView)-1 {
-				panel.scrollToFuture(ctx)
-			} else {
-				panel.currentFocus += 1
-				panel.Focus()
-			}
-
-			return nil
-		}
-
-		return event
-	})
-
-	panel.render(ctx)
+	if err := panel.render(ctx); err != nil {
+		panic(err)
+	}
 
 	return panel
+}
+
+func (p *Panel) Container() tview.Primitive {
+	return p.container
 }
 
 func (p *Panel) FocusPrimitive() tview.Primitive {
@@ -99,6 +69,50 @@ func (p *Panel) FocusPrimitive() tview.Primitive {
 
 func (p *Panel) Focus() {
 	p.app.SetFocus(p.FocusPrimitive())
+}
+
+func (p *Panel) setupHotkeys(ctx context.Context) {
+	p.container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyLeft && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+			p.focusLeft()
+			return nil
+		}
+
+		if event.Key() == tcell.KeyRight && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+			p.focusRight()
+			return nil
+		}
+
+		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+			p.currentFocus = 0
+			p.scrollNow(ctx)
+			return nil
+		}
+
+		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModAlt != 0 {
+			if p.currentFocus == 0 {
+				p.scrollToPast(ctx)
+			} else {
+				p.currentFocus -= 1
+				p.Focus()
+			}
+
+			return nil
+		}
+
+		if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
+			if p.currentFocus == len(p.inView)-1 {
+				p.scrollToFuture(ctx)
+			} else {
+				p.currentFocus += 1
+				p.Focus()
+			}
+
+			return nil
+		}
+
+		return event
+	})
 }
 
 func (p *Panel) scrollToPast(ctx context.Context) {
