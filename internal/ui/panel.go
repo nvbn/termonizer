@@ -49,6 +49,15 @@ func (p *Panel) scrollAfterHandler(ctx context.Context) func() {
 	}
 }
 
+func (p *Panel) scrollNowHandler(ctx context.Context) func() {
+	return func() {
+		p.offset = 0
+		if err := p.renderGoals(ctx); err != nil {
+			panic(err)
+		}
+	}
+}
+
 func (p *Panel) scrollBeforeHandler(ctx context.Context) func() {
 	return func() {
 		amount, err := p.goalsRepository.CountForPeriod(ctx, p.period)
@@ -92,9 +101,14 @@ func (p *Panel) renderGoals(ctx context.Context) error {
 }
 
 func (p *Panel) render(ctx context.Context) error {
+	topButtons := tview.NewFlex().SetDirection(tview.FlexColumn)
 	after := tview.NewButton("after")
 	after.SetSelectedFunc(p.scrollAfterHandler(ctx))
-	p.container.AddItem(after, 1, 1, false)
+	topButtons.AddItem(after, 0, 1, false)
+	now := tview.NewButton("↑")
+	now.SetSelectedFunc(p.scrollNowHandler(ctx))
+	topButtons.AddItem(now, 1, 0, false)
+	p.container.AddItem(topButtons, 1, 1, false)
 
 	p.goalsContainer = tview.NewFlex().SetDirection(tview.FlexRow)
 	if err := p.renderGoals(ctx); err != nil {
