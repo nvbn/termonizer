@@ -18,7 +18,7 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 	container := tview.NewFlex().SetDirection(tview.FlexColumn)
 
 	for _, period := range model.Periods {
-		panel := newPanel(ctx, period, goalsRepository)
+		panel := newPanel(ctx, app, period, goalsRepository)
 		container.AddItem(
 			panel.container,
 			0, 1, false,
