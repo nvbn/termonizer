@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/nvbn/termonizer/internal/utils"
+	"slices"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) *Goals {
 func (r *Goals) padYear(goals []model.Goal) []model.Goal {
 	if len(goals) == 0 || goals[len(goals)-1].Start.Year() < r.timeNow().Year() {
 		start := time.Date(r.timeNow().Year(), 1, 1, 0, 0, 0, 0, time.Local)
-		goals = append(goals, model.Goal{
+		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Year,
 			Content: "",
@@ -53,7 +54,7 @@ func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
 
 	if lastQuarter < currentQuarter {
 		currentQuarterStartDate := time.Date(r.timeNow().Year(), time.Month(currentQuarter*3-2), 1, 0, 0, 0, 0, time.Local)
-		goals = append(goals, model.Goal{
+		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Quarter,
 			Content: "",
@@ -74,7 +75,7 @@ func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 
 	_, currentWeek := r.timeNow().ISOWeek()
 	if lastWeek < currentWeek {
-		goals = append(goals, model.Goal{
+		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Week,
 			Content: "",
@@ -88,7 +89,7 @@ func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 
 func (r *Goals) padDay(goals []model.Goal) []model.Goal {
 	if len(goals) == 0 || goals[len(goals)-1].Start.Day() < r.timeNow().Day() {
-		goals = append(goals, model.Goal{
+		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Day,
 			Content: "",
