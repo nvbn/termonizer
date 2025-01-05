@@ -26,3 +26,13 @@ func TestQuarterFromTime(t *testing.T) {
 		})
 	}
 }
+
+func TestIgnoreTZ(t *testing.T) {
+	tm := time.Date(2024, 10, 1, 0, 0, 0, 0, time.UTC)
+	expected := time.Date(2024, 10, 1, 0, 0, 0, 0, time.Local)
+	got := IgnoreTZ(tm)
+	if got != expected {
+		t.Errorf("expected %v, got %v", expected, got)
+	}
+
+}

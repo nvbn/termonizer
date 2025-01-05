@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nvbn/termonizer/internal/model"
+	"github.com/nvbn/termonizer/internal/utils"
 )
 
 type SQLite struct {
@@ -61,17 +62,18 @@ func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, e
 
 	result := make([]model.Goal, 0)
 	for rows.Next() {
-		goals := model.Goal{}
+		goal := model.Goal{}
 		if err := rows.Scan(
-			&goals.ID,
-			&goals.Period,
-			&goals.Content,
-			&goals.Start,
-			&goals.Updated,
+			&goal.ID,
+			&goal.Period,
+			&goal.Content,
+			&goal.Start,
+			&goal.Updated,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan: %w", err)
 		}
-		result = append(result, goals)
+		goal.Start = utils.IgnoreTZ(goal.Start)
+		result = append(result, goal)
 	}
 
 	return result, nil

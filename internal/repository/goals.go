@@ -29,7 +29,7 @@ func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) *Goals {
 }
 
 func (r *Goals) padYear(goals []model.Goal) []model.Goal {
-	if len(goals) == 0 || goals[len(goals)-1].Start.Year() < r.timeNow().Year() {
+	if len(goals) == 0 || goals[0].Start.Year() < r.timeNow().Year() {
 		start := time.Date(r.timeNow().Year(), 1, 1, 0, 0, 0, 0, time.Local)
 		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
@@ -46,7 +46,7 @@ func (r *Goals) padYear(goals []model.Goal) []model.Goal {
 func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
 	lastQuarter := -1
 	if len(goals) > 0 {
-		lastGoals := goals[len(goals)-1]
+		lastGoals := goals[0]
 		lastQuarter = utils.QuarterFromTime(lastGoals.Start)
 	}
 
@@ -69,7 +69,7 @@ func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
 func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 	lastWeek := -1
 	if len(goals) > 0 {
-		lastGoals := goals[len(goals)-1]
+		lastGoals := goals[0]
 		_, lastWeek = lastGoals.Start.ISOWeek()
 	}
 
@@ -88,7 +88,7 @@ func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 }
 
 func (r *Goals) padDay(goals []model.Goal) []model.Goal {
-	if len(goals) == 0 || goals[len(goals)-1].Start.Day() < r.timeNow().Day() {
+	if len(goals) == 0 || goals[0].Start.Day() < r.timeNow().Day() {
 		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Day,

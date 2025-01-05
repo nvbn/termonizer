@@ -15,3 +15,7 @@ func WeekStart(t time.Time) time.Time {
 
 	return t.AddDate(0, 0, -int(weekDay))
 }
+
+func IgnoreTZ(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), time.Local)
+}

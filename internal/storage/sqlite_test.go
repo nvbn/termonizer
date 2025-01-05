@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/model"
+	"github.com/nvbn/termonizer/internal/utils"
 	"reflect"
 	"testing"
 	"time"
@@ -35,7 +36,7 @@ func TestSQLite(t *testing.T) {
 		ID:      uuid.New().String(),
 		Period:  0,
 		Content: "",
-		Start:   date,
+		Start:   utils.IgnoreTZ(date),
 		Updated: date,
 	}
 
