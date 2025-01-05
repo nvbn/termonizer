@@ -27,3 +27,5 @@ go.work.sum
 .idea
 
 bin
+
+test.db
