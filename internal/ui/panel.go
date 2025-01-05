@@ -26,7 +26,14 @@ type Panel struct {
 	currentFocus    int
 }
 
-func newPanel(ctx context.Context, app *tview.Application, period model.Period, goalsRepository goalsRepository) *Panel {
+func newPanel(
+	ctx context.Context,
+	app *tview.Application,
+	period model.Period,
+	goalsRepository goalsRepository,
+	focusLeft func(),
+	focusRight func(),
+) *Panel {
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
 	container.SetBorder(true).SetTitle(model.PeriodName(period))
 
@@ -40,12 +47,28 @@ func newPanel(ctx context.Context, app *tview.Application, period model.Period, 
 	}
 
 	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyLeft && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+			focusLeft()
+			return nil
+		}
+
+		if event.Key() == tcell.KeyRight && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+			focusRight()
+			return nil
+		}
+
+		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+			panel.currentFocus = 0
+			panel.scrollNow(ctx)
+			return nil
+		}
+
 		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModAlt != 0 {
 			if panel.currentFocus == 0 {
-				panel.scrollAfter(ctx)
+				panel.scrollToPast(ctx)
 			} else {
 				panel.currentFocus -= 1
-				app.SetFocus(panel.inView[panel.currentFocus])
+				panel.Focus()
 			}
 
 			return nil
@@ -53,10 +76,10 @@ func newPanel(ctx context.Context, app *tview.Application, period model.Period, 
 
 		if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
 			if panel.currentFocus == len(panel.inView)-1 {
-				panel.scrollBefore(ctx)
+				panel.scrollToFuture(ctx)
 			} else {
 				panel.currentFocus += 1
-				app.SetFocus(panel.inView[panel.currentFocus])
+				panel.Focus()
 			}
 
 			return nil
@@ -70,7 +93,11 @@ func newPanel(ctx context.Context, app *tview.Application, period model.Period, 
 	return panel
 }
 
-func (p *Panel) scrollAfter(ctx context.Context) {
+func (p *Panel) Focus() {
+	p.app.SetFocus(p.inView[p.currentFocus])
+}
+
+func (p *Panel) scrollToPast(ctx context.Context) {
 	if p.offset-1 >= 0 {
 		p.offset -= 1
 	}
@@ -86,7 +113,7 @@ func (p *Panel) scrollNow(ctx context.Context) {
 	}
 }
 
-func (p *Panel) scrollBefore(ctx context.Context) {
+func (p *Panel) scrollToFuture(ctx context.Context) {
 	amount, err := p.goalsRepository.CountForPeriod(ctx, p.period)
 	if err != nil {
 		panic(err)
@@ -139,9 +166,9 @@ func (p *Panel) renderGoals(ctx context.Context) error {
 
 func (p *Panel) render(ctx context.Context) error {
 	topButtons := tview.NewFlex().SetDirection(tview.FlexColumn)
-	after := tview.NewButton("after")
-	after.SetSelectedFunc(func() { p.scrollAfter(ctx) })
-	topButtons.AddItem(after, 0, 1, false)
+	future := tview.NewButton("future")
+	future.SetSelectedFunc(func() { p.scrollToPast(ctx) })
+	topButtons.AddItem(future, 0, 1, false)
 	now := tview.NewButton("↑")
 	now.SetSelectedFunc(func() { p.scrollNow(ctx) })
 	topButtons.AddItem(now, 1, 0, false)
@@ -153,9 +180,9 @@ func (p *Panel) render(ctx context.Context) error {
 	}
 	p.container.AddItem(p.goalsContainer, 0, 1, false)
 
-	before := tview.NewButton("before")
-	before.SetSelectedFunc(func() { p.scrollBefore(ctx) })
-	p.container.AddItem(before, 1, 1, false)
+	past := tview.NewButton("past")
+	past.SetSelectedFunc(func() { p.scrollToFuture(ctx) })
+	p.container.AddItem(past, 1, 1, false)
 
 	return nil
 }

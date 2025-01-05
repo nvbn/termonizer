@@ -17,12 +17,23 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 
 	container := tview.NewFlex().SetDirection(tview.FlexColumn)
 
-	for _, period := range model.Periods {
-		panel := newPanel(ctx, app, period, goalsRepository)
+	panels := make([]*Panel, len(model.Periods))
+
+	for n, period := range model.Periods {
+		panel := newPanel(ctx, app, period, goalsRepository, func() {
+			if n != 0 {
+				panels[n-1].Focus()
+			}
+		}, func() {
+			if n != len(model.Periods)-1 {
+				panels[n+1].Focus()
+			}
+		})
 		container.AddItem(
 			panel.container,
 			0, 1, false,
 		)
+		panels[n] = panel
 	}
 
 	if err := app.SetRoot(container, true).EnableMouse(true).Run(); err != nil {
