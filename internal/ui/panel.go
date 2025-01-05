@@ -5,16 +5,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
-	"log"
 	"time"
-)
-
-type focus int
-
-const (
-	focusNone focus = iota
-	focusPreserveOrFirst
-	focusPreserveOrLast
 )
 
 var periodToAmount = map[model.Period]int{
@@ -31,7 +22,8 @@ type Panel struct {
 	container       *tview.Flex
 	goalsContainer  *tview.Flex
 	offset          int
-	inFocus         string
+	inView          []tview.Primitive
+	currentFocus    int
 }
 
 func newPanel(ctx context.Context, app *tview.Application, period model.Period, goalsRepository goalsRepository) *Panel {
@@ -44,18 +36,29 @@ func newPanel(ctx context.Context, app *tview.Application, period model.Period, 
 		offset:          0,
 		period:          period,
 		goalsRepository: goalsRepository,
-		inFocus:         "",
+		currentFocus:    0,
 	}
 
 	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		log.Printf("event: %+v\n", event)
 		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModAlt != 0 {
-			panel.scrollAfter(ctx)
+			if panel.currentFocus == 0 {
+				panel.scrollAfter(ctx)
+			} else {
+				panel.currentFocus -= 1
+				app.SetFocus(panel.inView[panel.currentFocus])
+			}
+
 			return nil
 		}
 
 		if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
-			panel.scrollBefore(ctx)
+			if panel.currentFocus == len(panel.inView)-1 {
+				panel.scrollBefore(ctx)
+			} else {
+				panel.currentFocus += 1
+				app.SetFocus(panel.inView[panel.currentFocus])
+			}
+
 			return nil
 		}
 
@@ -71,14 +74,14 @@ func (p *Panel) scrollAfter(ctx context.Context) {
 	if p.offset-1 >= 0 {
 		p.offset -= 1
 	}
-	if err := p.renderGoals(ctx, focusPreserveOrLast); err != nil {
+	if err := p.renderGoals(ctx); err != nil {
 		panic(err)
 	}
 }
 
 func (p *Panel) scrollNow(ctx context.Context) {
 	p.offset = 0
-	if err := p.renderGoals(ctx, focusPreserveOrFirst); err != nil {
+	if err := p.renderGoals(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -92,12 +95,12 @@ func (p *Panel) scrollBefore(ctx context.Context) {
 	if p.offset+1 <= (amount - periodToAmount[p.period]) {
 		p.offset += 1
 	}
-	if err := p.renderGoals(ctx, focusPreserveOrFirst); err != nil {
+	if err := p.renderGoals(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (p *Panel) renderGoals(ctx context.Context, focus focus) error {
+func (p *Panel) renderGoals(ctx context.Context) error {
 	p.goalsContainer.Clear()
 
 	goals, err := p.goalsRepository.FindForPeriod(ctx, p.period)
@@ -109,8 +112,7 @@ func (p *Panel) renderGoals(ctx context.Context, focus focus) error {
 		goals = goals[p.offset : p.offset+periodToAmount[p.period]]
 	}
 
-	alreadyFocusedById := false
-	nextIdToFocus := ""
+	nextInView := make([]tview.Primitive, 0)
 	for n, goal := range goals {
 		input := tview.NewTextArea().SetText(goal.Content, false)
 		input.SetTitle(goal.Title()).SetTitle(goal.Title()).SetBorder(true)
@@ -120,25 +122,17 @@ func (p *Panel) renderGoals(ctx context.Context, focus focus) error {
 			p.goalsRepository.Update(ctx, goal)
 		})
 		input.SetFocusFunc(func() {
-			p.inFocus = goal.ID
+			p.currentFocus = n
 		})
+		nextInView = append(nextInView, input)
 		p.goalsContainer.AddItem(input, 0, 1, false)
 
-		// that logic sucks
-		if focus == focusPreserveOrFirst && n == 0 {
-			nextIdToFocus = goal.ID
-			p.app.SetFocus(input)
-		} else if focus == focusPreserveOrLast && n == len(goals)-1 && !alreadyFocusedById {
-			nextIdToFocus = goal.ID
-			p.app.SetFocus(input)
-		} else if p.inFocus == goal.ID {
-			nextIdToFocus = goal.ID
-			alreadyFocusedById = true
+		if p.currentFocus == n {
 			p.app.SetFocus(input)
 		}
 	}
 
-	p.inFocus = nextIdToFocus
+	p.inView = nextInView
 
 	return nil
 }
@@ -154,7 +148,7 @@ func (p *Panel) render(ctx context.Context) error {
 	p.container.AddItem(topButtons, 1, 1, false)
 
 	p.goalsContainer = tview.NewFlex().SetDirection(tview.FlexRow)
-	if err := p.renderGoals(ctx, focusNone); err != nil {
+	if err := p.renderGoals(ctx); err != nil {
 		return err
 	}
 	p.container.AddItem(p.goalsContainer, 0, 1, false)
