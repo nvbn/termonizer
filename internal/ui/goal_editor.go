@@ -44,7 +44,7 @@ func (e *GoalEditor) initPrimitive(ctx context.Context) {
 	e.Primitive = p
 }
 
-// manual ctrl+c / ctrl+v
+// manual ctrl+c / ctrl+v / ctrl + x
 func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlC {
 		selected, _, _ := e.Primitive.GetSelection()
@@ -55,6 +55,14 @@ func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlV {
 		text := clipboard.Read(clipboard.FmtText)
 		e.Primitive.PasteHandler()(string(text), nil)
+		return nil
+	}
+
+	if event.Key() == tcell.KeyCtrlX {
+		selected, start, end := e.Primitive.GetSelection()
+		e.Primitive.Replace(start, end, "")
+		clipboard.Write(clipboard.FmtText, []byte(selected))
+		return nil
 	}
 
 	return event
