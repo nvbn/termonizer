@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/nvbn/termonizer/internal/repository"
 	"github.com/nvbn/termonizer/internal/storage"
 	"github.com/nvbn/termonizer/internal/ui"
@@ -16,7 +17,33 @@ import (
 var dbPath = flag.String("db", "${HOME}/.termonizer.db", "path to the database")
 var debug = flag.String("debug", "", "debug output path")
 
+var hotkeysDoc = `
+Esc - exit
+
+Navigation:
+  ⌥↑	future/up goal
+  ⇧⌥↑	current/first goal
+  ⌥↓	past/down goal
+  ⇧⌥←	longer/left period
+  ⇧⌥→	shorter/right period
+
+Zooming:
+  ⌥+	zoom in / decrease the amount of visible goals
+  ⌥-	zoom out / increase the amount of visible goals
+
+Text editing:
+  ⌃C	copy
+  ⌃X	cut
+  ⌃V	paste
+`
+
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage of termonizer:\n")
+		flag.PrintDefaults()
+		fmt.Fprintln(flag.CommandLine.Output(), hotkeysDoc)
+	}
+
 	flag.Parse()
 
 	if *debug == "" {
