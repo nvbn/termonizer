@@ -55,12 +55,11 @@ func (l *GoalsList) Focus() {
 }
 
 func (l *GoalsList) ScrollFuture(ctx context.Context) {
-	if l.offset < 1 {
-		return
+	if l.offset >= 1 {
+		l.offset -= 1
 	}
 
-	l.offset -= 1
-	l.render(ctx)
+	l.render(ctx) // always re-render as it's the only way to get a new day
 }
 
 func (l *GoalsList) ScrollNow(ctx context.Context) {
