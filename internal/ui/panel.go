@@ -20,12 +20,9 @@ type Panel struct {
 	period          model.Period
 	goalsRepository goalsRepository
 	container       *tview.Flex
-	goalsContainer  *tview.Flex
-	offset          int
-	inView          []*GoalEditor
-	currentFocus    int
 	focusLeft       func()
 	focusRight      func()
+	goalsList       *GoalsList
 }
 
 func newPanel(
@@ -39,15 +36,20 @@ func newPanel(
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
 	container.SetBorder(true).SetTitle(model.PeriodName(period))
 
+	goalsList := NewGoalsList(ctx, GoalsListProps{
+		app:             app,
+		period:          period,
+		goalsRepository: goalsRepository,
+	})
+
 	panel := &Panel{
 		app:             app,
 		container:       container,
-		offset:          0,
 		period:          period,
 		goalsRepository: goalsRepository,
-		currentFocus:    0,
 		focusLeft:       focusLeft,
 		focusRight:      focusRight,
+		goalsList:       goalsList,
 	}
 
 	panel.setupHotkeys(ctx)
@@ -64,7 +66,7 @@ func (p *Panel) Container() tview.Primitive {
 }
 
 func (p *Panel) EditorInFocus() *GoalEditor {
-	return p.inView[p.currentFocus]
+	return p.goalsList.EditorInFocus()
 }
 
 func (p *Panel) Focus() {
@@ -85,122 +87,24 @@ func (p *Panel) setupHotkeys(ctx context.Context) {
 			return nil
 		}
 
-		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
-			p.currentFocus = 0
-			p.scrollNow(ctx)
-			return nil
-		}
-
-		if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModAlt != 0 {
-			if p.currentFocus == 0 {
-				p.scrollToPast(ctx)
-			} else {
-				p.currentFocus -= 1
-				p.Focus()
-			}
-
-			return nil
-		}
-
-		if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
-			if p.currentFocus == len(p.inView)-1 {
-				p.scrollToFuture(ctx)
-			} else {
-				p.currentFocus += 1
-				p.Focus()
-			}
-
-			return nil
-		}
-
 		return event
 	})
-}
-
-func (p *Panel) scrollToPast(ctx context.Context) {
-	if p.offset-1 >= 0 {
-		p.offset -= 1
-	}
-	if err := p.renderGoals(ctx); err != nil {
-		panic(err)
-	}
-}
-
-func (p *Panel) scrollNow(ctx context.Context) {
-	p.offset = 0
-	if err := p.renderGoals(ctx); err != nil {
-		panic(err)
-	}
-}
-
-func (p *Panel) scrollToFuture(ctx context.Context) {
-	amount, err := p.goalsRepository.CountForPeriod(ctx, p.period)
-	if err != nil {
-		panic(err)
-	}
-
-	if p.offset+1 <= (amount - periodToAmount[p.period]) {
-		p.offset += 1
-	}
-	if err := p.renderGoals(ctx); err != nil {
-		panic(err)
-	}
-}
-
-func (p *Panel) renderGoals(ctx context.Context) error {
-	p.goalsContainer.Clear()
-
-	goals, err := p.goalsRepository.FindForPeriod(ctx, p.period)
-	if err != nil {
-		return err
-	}
-
-	if p.offset+periodToAmount[p.period] <= len(goals) {
-		goals = goals[p.offset : p.offset+periodToAmount[p.period]]
-	}
-
-	nextInView := make([]*GoalEditor, 0)
-	for n, goal := range goals {
-		editor := NewEditor(ctx, GoalEditorProps{
-			app:             p.app,
-			goalsRepository: p.goalsRepository,
-			goal:            goal,
-			onFocus: func() {
-				p.currentFocus = n
-			},
-		})
-
-		nextInView = append(nextInView, editor)
-		p.goalsContainer.AddItem(editor.Primitive, 0, 1, false)
-
-		if p.currentFocus == n {
-			p.app.SetFocus(editor.Primitive)
-		}
-	}
-
-	p.inView = nextInView
-
-	return nil
 }
 
 func (p *Panel) render(ctx context.Context) error {
 	topButtons := tview.NewFlex().SetDirection(tview.FlexColumn)
 	future := tview.NewButton("future")
-	future.SetSelectedFunc(func() { p.scrollToPast(ctx) })
+	future.SetSelectedFunc(func() { p.goalsList.ScrollFuture(ctx) })
 	topButtons.AddItem(future, 0, 1, false)
 	now := tview.NewButton("↑")
-	now.SetSelectedFunc(func() { p.scrollNow(ctx) })
+	now.SetSelectedFunc(func() { p.goalsList.ScrollNow(ctx) })
 	topButtons.AddItem(now, 1, 0, false)
 	p.container.AddItem(topButtons, 1, 1, false)
 
-	p.goalsContainer = tview.NewFlex().SetDirection(tview.FlexRow)
-	if err := p.renderGoals(ctx); err != nil {
-		return err
-	}
-	p.container.AddItem(p.goalsContainer, 0, 1, false)
+	p.container.AddItem(p.goalsList.Primitive, 0, 1, false)
 
 	past := tview.NewButton("past")
-	past.SetSelectedFunc(func() { p.scrollToFuture(ctx) })
+	past.SetSelectedFunc(func() { p.goalsList.ScrollPast(ctx) })
 	p.container.AddItem(past, 1, 1, false)
 
 	return nil

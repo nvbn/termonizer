@@ -40,12 +40,12 @@ func (e *GoalEditor) initPrimitive(ctx context.Context) {
 		}
 	})
 	p.SetFocusFunc(e.onFocus)
-	p.SetInputCapture(e.onInput)
+	p.SetInputCapture(e.handleHotkeys)
 	e.Primitive = p
 }
 
-// manual ctrl+c and ctrl+v
-func (e *GoalEditor) onInput(event *tcell.EventKey) *tcell.EventKey {
+// manual ctrl+c / ctrl+v
+func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlC {
 		selected, _, _ := e.Primitive.GetSelection()
 		clipboard.Write(clipboard.FmtText, []byte(selected))
