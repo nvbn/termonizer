@@ -2,8 +2,10 @@ package ui
 
 import (
 	"context"
+	"github.com/gdamore/tcell/v2"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
+	"log"
 )
 
 type goalsRepository interface {
@@ -14,6 +16,20 @@ type goalsRepository interface {
 
 func Show(ctx context.Context, goalsRepository goalsRepository) error {
 	app := tview.NewApplication()
+
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEsc {
+			app.Stop()
+			return nil
+		}
+
+		if event.Key() == tcell.KeyCtrlC {
+			log.Printf("ctrl+c ignored")
+			return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
+		}
+
+		return event
+	})
 
 	container := tview.NewFlex().SetDirection(tview.FlexColumn)
 
@@ -40,6 +56,7 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 
 	if err := app.SetRoot(container, true).
 		EnableMouse(true).
+		EnablePaste(true).
 		SetFocus(lastPanel.FocusPrimitive()).
 		Run(); err != nil {
 		return err

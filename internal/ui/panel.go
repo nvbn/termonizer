@@ -5,6 +5,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
+	"golang.design/x/clipboard"
+	"log"
 	"time"
 )
 
@@ -73,6 +75,8 @@ func (p *Panel) Focus() {
 
 func (p *Panel) setupHotkeys(ctx context.Context) {
 	p.container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		log.Printf("event: %#v\n", event)
+
 		if event.Key() == tcell.KeyLeft && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
 			p.focusLeft()
 			return nil
@@ -169,6 +173,22 @@ func (p *Panel) renderGoals(ctx context.Context) error {
 		input.SetFocusFunc(func() {
 			p.currentFocus = n
 		})
+		input.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			// that sucks, ctrl+c and ctrl+v lol
+			if event.Key() == tcell.KeyCtrlC {
+				selected, _, _ := input.GetSelection()
+				clipboard.Write(clipboard.FmtText, []byte(selected))
+				return nil
+			}
+
+			if event.Key() == tcell.KeyCtrlV {
+				text := clipboard.Read(clipboard.FmtText)
+				input.PasteHandler()(string(text), nil)
+			}
+
+			return event
+		})
+
 		nextInView = append(nextInView, input)
 		p.goalsContainer.AddItem(input, 0, 1, false)
 
