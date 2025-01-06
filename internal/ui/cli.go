@@ -13,6 +13,7 @@ type CLI struct {
 	goalsRepository goalsRepository
 	container       *tview.Flex
 	panels          []*PeriodPanel
+	currentFocus    int
 }
 
 func NewCLI(ctx context.Context, goalsRepository goalsRepository) *CLI {
@@ -43,8 +44,7 @@ func (c *CLI) render(ctx context.Context) {
 			app:             c.app,
 			period:          period,
 			goalsRepository: c.goalsRepository,
-			focusLeft:       func() { c.focusLeft(n) },
-			focusRight:      func() { c.focusRight(n) },
+			onFocus:         func() { c.currentFocus = n },
 		})
 		c.container.AddItem(panel.Primitive, 0, 1, false)
 		c.panels[n] = panel
@@ -62,23 +62,33 @@ func (c *CLI) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 		return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
 	}
 
+	if event.Key() == tcell.KeyLeft && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+		c.focusLeft()
+		return nil
+	}
+
+	if event.Key() == tcell.KeyRight && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+		c.focusRight()
+		return nil
+	}
+
 	return event
 }
 
-func (c *CLI) focusLeft(n int) {
-	if n == 0 {
+func (c *CLI) focusLeft() {
+	if c.currentFocus == 0 {
 		return
 	}
 
-	c.panels[n-1].Focus()
+	c.panels[c.currentFocus-1].Focus()
 }
 
-func (c *CLI) focusRight(n int) {
-	if n == len(c.panels)-1 {
+func (c *CLI) focusRight() {
+	if c.currentFocus == len(c.panels)-1 {
 		return
 	}
 
-	c.panels[n+1].Focus()
+	c.panels[c.currentFocus+1].Focus()
 }
 
 func (c *CLI) Run() error {

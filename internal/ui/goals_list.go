@@ -20,6 +20,7 @@ type GoalsListProps struct {
 	app             *tview.Application
 	period          model.Period
 	goalsRepository goalsRepository
+	onFocus         func()
 }
 
 type GoalsList struct {
@@ -112,6 +113,7 @@ func (l *GoalsList) getVisibleGoals(ctx context.Context) []model.Goal {
 func (l *GoalsList) initPrimitive(ctx context.Context) {
 	p := tview.NewFlex().SetDirection(tview.FlexRow)
 	p.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey { return l.handleHotkeys(ctx, event) })
+	p.SetFocusFunc(l.onFocus)
 	l.Primitive = p
 }
 
@@ -147,6 +149,7 @@ func (l *GoalsList) render(ctx context.Context) {
 			goal:            goal,
 			onFocus: func() {
 				l.currentFocus = n
+				l.onFocus()
 			},
 		})
 
