@@ -5,9 +5,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
-	"golang.design/x/clipboard"
 	"log"
-	"time"
 )
 
 var periodToAmount = map[model.Period]int{
@@ -24,7 +22,7 @@ type Panel struct {
 	container       *tview.Flex
 	goalsContainer  *tview.Flex
 	offset          int
-	inView          []tview.Primitive
+	inView          []*GoalEditor
 	currentFocus    int
 	focusLeft       func()
 	focusRight      func()
@@ -65,12 +63,12 @@ func (p *Panel) Container() tview.Primitive {
 	return p.container
 }
 
-func (p *Panel) FocusPrimitive() tview.Primitive {
+func (p *Panel) EditorInFocus() *GoalEditor {
 	return p.inView[p.currentFocus]
 }
 
 func (p *Panel) Focus() {
-	p.app.SetFocus(p.FocusPrimitive())
+	p.EditorInFocus().Focus()
 }
 
 func (p *Panel) setupHotkeys(ctx context.Context) {
@@ -161,39 +159,22 @@ func (p *Panel) renderGoals(ctx context.Context) error {
 		goals = goals[p.offset : p.offset+periodToAmount[p.period]]
 	}
 
-	nextInView := make([]tview.Primitive, 0)
+	nextInView := make([]*GoalEditor, 0)
 	for n, goal := range goals {
-		input := tview.NewTextArea().SetText(goal.Content, false)
-		input.SetTitle(goal.Title()).SetTitle(goal.Title()).SetBorder(true)
-		input.SetChangedFunc(func() {
-			goal.Content = input.GetText()
-			goal.Updated = time.Now()
-			p.goalsRepository.Update(ctx, goal)
-		})
-		input.SetFocusFunc(func() {
-			p.currentFocus = n
-		})
-		input.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			// that sucks, ctrl+c and ctrl+v lol
-			if event.Key() == tcell.KeyCtrlC {
-				selected, _, _ := input.GetSelection()
-				clipboard.Write(clipboard.FmtText, []byte(selected))
-				return nil
-			}
-
-			if event.Key() == tcell.KeyCtrlV {
-				text := clipboard.Read(clipboard.FmtText)
-				input.PasteHandler()(string(text), nil)
-			}
-
-			return event
+		editor := NewEditor(ctx, GoalEditorProps{
+			app:             p.app,
+			goalsRepository: p.goalsRepository,
+			goal:            goal,
+			onFocus: func() {
+				p.currentFocus = n
+			},
 		})
 
-		nextInView = append(nextInView, input)
-		p.goalsContainer.AddItem(input, 0, 1, false)
+		nextInView = append(nextInView, editor)
+		p.goalsContainer.AddItem(editor.Primitive, 0, 1, false)
 
 		if p.currentFocus == n {
-			p.app.SetFocus(input)
+			p.app.SetFocus(editor.Primitive)
 		}
 	}
 

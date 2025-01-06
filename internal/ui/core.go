@@ -57,7 +57,7 @@ func Show(ctx context.Context, goalsRepository goalsRepository) error {
 	if err := app.SetRoot(container, true).
 		EnableMouse(true).
 		EnablePaste(true).
-		SetFocus(lastPanel.FocusPrimitive()).
+		SetFocus(lastPanel.EditorInFocus().Primitive).
 		Run(); err != nil {
 		return err
 	}

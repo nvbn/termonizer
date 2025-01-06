@@ -125,6 +125,7 @@ func (r *Goals) CountForPeriod(ctx context.Context, period model.Period) (int, e
 	return r.storage.CountForPeriod(ctx, period)
 }
 
-func (r *Goals) Update(ctx context.Context, goals model.Goal) error {
-	return r.storage.Update(ctx, goals)
+func (r *Goals) Update(ctx context.Context, goal model.Goal) error {
+	goal.Updated = r.timeNow()
+	return r.storage.Update(ctx, goal)
 }
