@@ -43,7 +43,7 @@ func main() {
 		panic(err)
 	}
 
-	if err = ui.Show(ctx, goalsRepository); err != nil {
+	if err = ui.NewCLI(ctx, goalsRepository).Run(); err != nil {
 		panic(err)
 	}
 }

@@ -8,6 +8,14 @@ import (
 	"log"
 )
 
+// TODO: make configurable
+var periodToAmount = map[model.Period]int{
+	model.Year:    4,
+	model.Quarter: 4,
+	model.Week:    4,
+	model.Day:     5,
+}
+
 type GoalsListProps struct {
 	app             *tview.Application
 	period          model.Period
@@ -133,7 +141,7 @@ func (l *GoalsList) render(ctx context.Context) {
 
 	nextInView := make([]*GoalEditor, 0, len(goals))
 	for n, goal := range goals {
-		editor := NewEditor(ctx, GoalEditorProps{
+		editor := NewGoalEditor(ctx, GoalEditorProps{
 			app:             l.app,
 			goalsRepository: l.goalsRepository,
 			goal:            goal,

@@ -22,7 +22,7 @@ type GoalEditor struct {
 	Primitive *tview.TextArea
 }
 
-func NewEditor(ctx context.Context, props GoalEditorProps) *GoalEditor {
+func NewGoalEditor(ctx context.Context, props GoalEditorProps) *GoalEditor {
 	e := &GoalEditor{GoalEditorProps: props}
 	e.initPrimitive(ctx)
 	return e
