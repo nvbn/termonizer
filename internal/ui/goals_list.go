@@ -31,10 +31,14 @@ type GoalsList struct {
 	inView       []*GoalEditor
 	offset       int
 	currentFocus int
+	amountToShow int
 }
 
 func NewGoalsList(ctx context.Context, props GoalsListProps) *GoalsList {
-	l := &GoalsList{GoalsListProps: props}
+	l := &GoalsList{
+		GoalsListProps: props,
+		amountToShow:   periodToAmount[props.period],
+	}
 
 	l.initPrimitive(ctx)
 	l.render(ctx)
@@ -103,8 +107,8 @@ func (l *GoalsList) getVisibleGoals(ctx context.Context) []model.Goal {
 		log.Fatalf("failed to find goals: %v", err)
 	}
 
-	if l.offset+periodToAmount[l.period] <= len(goals) {
-		return goals[l.offset : l.offset+periodToAmount[l.period]]
+	if l.offset+l.amountToShow <= len(goals) {
+		return goals[l.offset : l.offset+l.amountToShow]
 	}
 
 	return goals
@@ -115,6 +119,32 @@ func (l *GoalsList) initPrimitive(ctx context.Context) {
 	p.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey { return l.handleHotkeys(ctx, event) })
 	p.SetFocusFunc(l.onFocus)
 	l.Primitive = p
+}
+
+func (l *GoalsList) zoomIn(ctx context.Context) {
+	if l.amountToShow == 1 {
+		return
+	}
+
+	l.amountToShow -= 1
+
+	if l.currentFocus >= l.amountToShow {
+		l.offset += 1
+		l.currentFocus -= 1
+	}
+
+	l.render(ctx)
+}
+
+func (l *GoalsList) zoomOut(ctx context.Context) {
+	l.amountToShow += 1
+
+	if l.amountToShow <= len(l.getVisibleGoals(ctx)) && l.offset > 0 {
+		l.offset -= 1
+		l.currentFocus += 1
+	}
+
+	l.render(ctx)
 }
 
 func (l *GoalsList) handleHotkeys(ctx context.Context, event *tcell.EventKey) *tcell.EventKey {
@@ -130,6 +160,18 @@ func (l *GoalsList) handleHotkeys(ctx context.Context, event *tcell.EventKey) *t
 
 	if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
 		l.focusPast(ctx)
+		return nil
+	}
+
+	// option + =
+	if event.Key() == tcell.KeyRune && event.Rune() == '≠' {
+		l.zoomIn(ctx)
+		return nil
+	}
+
+	// option + -
+	if event.Key() == tcell.KeyRune && event.Rune() == '–' {
+		l.zoomOut(ctx)
 		return nil
 	}
 
