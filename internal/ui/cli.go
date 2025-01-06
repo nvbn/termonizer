@@ -53,21 +53,23 @@ func (c *CLI) render(ctx context.Context) {
 
 func (c *CLI) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEsc {
+		log.Printf("hotkey: esc")
 		c.app.Stop()
 		return nil
 	}
 
 	if event.Key() == tcell.KeyCtrlC {
-		log.Printf("ctrl+c ignored")
 		return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
 	}
 
 	if event.Key() == tcell.KeyLeft && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+		log.Printf("hotkey: option shift left")
 		c.focusLeft()
 		return nil
 	}
 
 	if event.Key() == tcell.KeyRight && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+		log.Printf("hotkey: option shift right")
 		c.focusRight()
 		return nil
 	}

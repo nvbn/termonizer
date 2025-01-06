@@ -148,28 +148,33 @@ func (l *GoalsList) zoomOut(ctx context.Context) {
 
 func (l *GoalsList) handleHotkeys(ctx context.Context, event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModShift != 0 && event.Modifiers()&tcell.ModAlt != 0 {
+		log.Println("hotkey: option shift up")
 		l.ScrollNow(ctx)
 		return nil
 	}
 
 	if event.Key() == tcell.KeyUp && event.Modifiers()&tcell.ModAlt != 0 {
+		log.Println("hotkey: option up")
 		l.focusFuture(ctx)
 		return nil
 	}
 
 	if event.Key() == tcell.KeyDown && event.Modifiers()&tcell.ModAlt != 0 {
+		log.Println("hotkey: option down")
 		l.focusPast(ctx)
 		return nil
 	}
 
 	// option + =
 	if event.Key() == tcell.KeyRune && event.Rune() == '≠' {
+		log.Println("hotkey: option +")
 		l.zoomIn(ctx)
 		return nil
 	}
 
 	// option + -
 	if event.Key() == tcell.KeyRune && event.Rune() == '–' {
+		log.Println("hotkey: option -")
 		l.zoomOut(ctx)
 		return nil
 	}
