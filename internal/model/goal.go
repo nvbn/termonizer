@@ -25,11 +25,11 @@ func (g *Goal) Title() string {
 	case Week:
 		date := g.Start.Format("2006-01-02")
 		_, weekNumber := g.Start.ISOWeek()
-		return fmt.Sprintf("%s (%d)", date, weekNumber)
+		return fmt.Sprintf("%s W%d", date, weekNumber)
 	case Day:
 		date := g.Start.Format("2006-01-02")
 		weekDay := g.Start.Weekday()
-		return fmt.Sprintf("%s (%s)", date, weekDay)
+		return fmt.Sprintf("%s %s", date, weekDay)
 	}
 
 	panic("Unknown period")
