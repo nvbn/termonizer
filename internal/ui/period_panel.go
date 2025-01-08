@@ -48,11 +48,11 @@ func (p *PeriodPanel) PrimitiveInFocus() tview.Primitive {
 func (p *PeriodPanel) makeTopButtons(ctx context.Context) tview.Primitive {
 	topButtons := tview.NewFlex().SetDirection(tview.FlexColumn)
 
-	future := tview.NewButton("future")
+	future := tview.NewButton(" future")
 	future.SetSelectedFunc(func() { p.goalsList.ScrollFuture(ctx) })
 	topButtons.AddItem(future, 0, 1, false)
 
-	now := tview.NewButton("↑")
+	now := tview.NewButton("↑ ")
 	now.SetSelectedFunc(func() { p.goalsList.ScrollNow(ctx) })
 	topButtons.AddItem(now, 1, 0, false)
 
@@ -60,7 +60,7 @@ func (p *PeriodPanel) makeTopButtons(ctx context.Context) tview.Primitive {
 }
 
 func (p *PeriodPanel) makeBottomButton(ctx context.Context) tview.Primitive {
-	past := tview.NewButton("past")
+	past := tview.NewButton(" past")
 	past.SetSelectedFunc(func() { p.goalsList.ScrollPast(ctx) })
 	return past
 }
