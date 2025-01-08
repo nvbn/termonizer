@@ -125,7 +125,11 @@ func (l *GoalsList) zoomIn(ctx context.Context) {
 		return
 	}
 
-	l.amountToShow -= 1
+	if l.amountToShow > len(l.inView) && len(l.inView) > 1 {
+		l.amountToShow = len(l.inView) - 1
+	} else {
+		l.amountToShow -= 1
+	}
 
 	if l.currentFocus >= l.amountToShow {
 		l.offset += 1
