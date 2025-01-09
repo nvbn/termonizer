@@ -9,6 +9,13 @@ import (
 	"log"
 )
 
+const goalEditorPlaceholder = `* a things to do
+* a thing to achieve
+
+--
+Some notes. That's just a placeholder in some opinionated format.'
+`
+
 type GoalEditorProps struct {
 	app             *tview.Application
 	goalsRepository goalsRepository
@@ -33,6 +40,7 @@ func (e *GoalEditor) initPrimitive(ctx context.Context) {
 	p.SetTitle(e.goal.Title())
 	p.SetBorder(true)
 	p.SetText(e.goal.Content, false)
+	p.SetPlaceholder(goalEditorPlaceholder)
 	p.SetChangedFunc(func() {
 		e.goal.Content = p.GetText()
 		if err := e.goalsRepository.Update(ctx, e.goal); err != nil {
