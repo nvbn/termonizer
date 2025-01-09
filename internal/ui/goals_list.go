@@ -74,7 +74,7 @@ func (l *GoalsList) ScrollPast(ctx context.Context) {
 		log.Fatalf("failed to count goals: %v", err)
 	}
 
-	if l.offset+1 == (amount - periodToAmount[l.period]) {
+	if l.offset == (amount - l.amountToShow) {
 		return
 	}
 
