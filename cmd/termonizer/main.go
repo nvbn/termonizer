@@ -64,6 +64,10 @@ func main() {
 	}
 	defer goalsStorage.Close()
 
+	if err := goalsStorage.Cleanup(ctx); err != nil {
+		panic(err)
+	}
+
 	goalsRepository := repository.NewGoalsRepository(time.Now, goalsStorage)
 
 	if err := clipboard.Init(); err != nil {

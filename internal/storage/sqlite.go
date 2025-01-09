@@ -118,6 +118,15 @@ func (s *SQLite) Update(ctx context.Context, goals model.Goal) error {
 	return err
 }
 
+func (s *SQLite) Cleanup(ctx context.Context) error {
+	_, err := s.db.ExecContext(ctx, `
+		delete from Goals
+		where content = ""
+	`)
+
+	return err
+}
+
 func (s *SQLite) Close() error {
 	return s.db.Close()
 }
