@@ -13,7 +13,7 @@ const goalEditorPlaceholder = `* a things to do
 * a thing to achieve
 
 --
-Some notes. That's just a placeholder in some opinionated format.'
+Some notes. This is just a placeholder in some opinionated format.
 `
 
 type GoalEditorProps struct {
