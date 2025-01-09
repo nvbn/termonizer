@@ -21,6 +21,7 @@ func (m *storageMock) CountForPeriod(ctx context.Context, period int) (int, erro
 	return 0, nil
 }
 
+// TODO: make test better
 func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
 	ctx := context.Background()
 
@@ -33,8 +34,8 @@ func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
 	periodToExpectedGoalTitle := map[model.Period]string{
 		model.Year:    "2024",
 		model.Quarter: "2024 Q4",
-		model.Week:    "2024-12-09 (50)",
-		model.Day:     "2024-12-10 (Tuesday)",
+		model.Week:    "2024-12-09 W50",
+		model.Day:     "2024-12-10 Tuesday",
 	}
 
 	for period, expectedTitle := range periodToExpectedGoalTitle {

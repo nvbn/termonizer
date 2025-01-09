@@ -24,8 +24,8 @@ func TestGoals_Title(t *testing.T) {
 	goalsToExpectedTitle := map[Goal]string{
 		makeGoal(Year, "2024-12-10"):    "2024",
 		makeGoal(Quarter, "2024-12-10"): "2024 Q4",
-		makeGoal(Week, "2024-12-10"):    "2024-12-10 (50)",
-		makeGoal(Day, "2024-12-10"):     "2024-12-10 (Tuesday)",
+		makeGoal(Week, "2024-12-10"):    "2024-12-10 W50",
+		makeGoal(Day, "2024-12-10"):     "2024-12-10 Tuesday",
 	}
 
 	for goal, expectedTitle := range goalsToExpectedTitle {
