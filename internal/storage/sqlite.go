@@ -52,7 +52,9 @@ func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, e
 		    start,
 		    updated
 		from Goals
-		where period = ?
+		where
+		    period = ?
+		 	and content != ""
 		order by start desc
 	`, period)
 	if err != nil {
@@ -82,7 +84,12 @@ func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, e
 func (s *SQLite) CountForPeriod(ctx context.Context, period int) (int, error) {
 	var count int
 	if err := s.db.QueryRowContext(ctx, `
-		select count(*) from Goals where period = ?
+		select
+		    count(*)
+		from Goals
+			where
+			    period = ?
+			  and content != ""
 	`, period).Scan(&count); err != nil {
 		return 0, fmt.Errorf("failed to query: %w", err)
 	}
