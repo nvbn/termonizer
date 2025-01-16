@@ -24,7 +24,6 @@ func NewCLI(ctx context.Context, timeNow func() time.Time, goalsRepository goals
 		goalsRepository: goalsRepository,
 		timeNow:         timeNow,
 	}
-	log.Printf(c.lastEscapePress.String())
 	c.init(ctx)
 	return c
 }
