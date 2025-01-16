@@ -36,6 +36,7 @@ Text editing:
   ⌃X	cut
   ⌃V	paste
   ⌃A	select all
+  Esc	remove selection
 `
 
 func main() {

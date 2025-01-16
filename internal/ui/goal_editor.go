@@ -89,21 +89,21 @@ func (e *GoalEditor) handleList() bool {
 // manual ctrl+c / ctrl+v / ctrl + x
 func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlC {
-		log.Println("hotkey: ctrl c")
+		log.Println("hotkey editor: ctrl c")
 		selected, _, _ := e.Primitive.GetSelection()
 		clipboard.Write(clipboard.FmtText, []byte(selected))
 		return nil
 	}
 
 	if event.Key() == tcell.KeyCtrlV {
-		log.Println("hotkey: ctrl v")
+		log.Println("hotkey editor: ctrl v")
 		text := clipboard.Read(clipboard.FmtText)
 		e.Primitive.PasteHandler()(string(text), nil)
 		return nil
 	}
 
 	if event.Key() == tcell.KeyCtrlX {
-		log.Println("hotkey: ctrl x")
+		log.Println("hotkey editor: ctrl x")
 		selected, start, end := e.Primitive.GetSelection()
 		e.Primitive.Replace(start, end, "")
 		clipboard.Write(clipboard.FmtText, []byte(selected))
@@ -111,15 +111,23 @@ func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	if event.Key() == tcell.KeyCtrlA {
-		log.Println("hotkey: ctrl A")
+		log.Println("hotkey editor: ctrl A")
 		e.Primitive.Select(0, len(e.Primitive.GetText()))
 		return nil
 	}
 
 	if event.Key() == tcell.KeyEnter {
-		log.Println("hotkey: enter")
+		log.Println("hotkey editor: enter")
 		if e.handleList() {
 			return nil
+		}
+	}
+
+	if event.Key() == tcell.KeyEsc {
+		log.Println("hotkey editor: escape")
+		_, start, end := e.Primitive.GetSelection()
+		if start != end {
+			e.Primitive.Select(start, start)
 		}
 	}
 
