@@ -112,9 +112,11 @@ func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
-	if event.Key() == tcell.KeyEnter && e.handleList() {
-		log.Println("hotkey: enter in list")
-		return nil
+	if event.Key() == tcell.KeyEnter {
+		log.Println("hotkey: enter")
+		if e.handleList() {
+			return nil
+		}
 	}
 
 	return event
