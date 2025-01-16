@@ -35,6 +35,7 @@ Text editing:
   ⌃C	copy
   ⌃X	cut
   ⌃V	paste
+  ⌃A	select all
 `
 
 func main() {
