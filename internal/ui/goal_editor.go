@@ -103,6 +103,12 @@ func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
+	if event.Key() == tcell.KeyCtrlA {
+		log.Println("hotkey: ctrl A")
+		e.Primitive.Select(0, len(e.Primitive.GetText()))
+		return nil
+	}
+
 	if event.Key() == tcell.KeyEnter && e.handleList() {
 		log.Println("hotkey: enter in list")
 		return nil
