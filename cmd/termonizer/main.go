@@ -76,7 +76,7 @@ func main() {
 		panic(err)
 	}
 
-	if err = ui.NewCLI(ctx, goalsRepository).Run(); err != nil {
+	if err = ui.NewCLI(ctx, time.Now, goalsRepository).Run(); err != nil {
 		panic(err)
 	}
 }

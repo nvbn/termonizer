@@ -11,6 +11,7 @@ import (
 
 type CLI struct {
 	app             *tview.Application
+	timeNow         func() time.Time
 	goalsRepository goalsRepository
 	container       *tview.Flex
 	panels          []*PeriodPanel
@@ -18,9 +19,10 @@ type CLI struct {
 	lastEscapePress time.Time
 }
 
-func NewCLI(ctx context.Context, goalsRepository goalsRepository) *CLI {
+func NewCLI(ctx context.Context, timeNow func() time.Time, goalsRepository goalsRepository) *CLI {
 	c := &CLI{
 		goalsRepository: goalsRepository,
+		timeNow:         timeNow,
 	}
 	log.Printf(c.lastEscapePress.String())
 	c.init(ctx)
@@ -58,7 +60,7 @@ func (c *CLI) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEsc {
 		log.Printf("hotkey: esc")
 
-		now := time.Now()
+		now := c.timeNow()
 		if now.Sub(c.lastEscapePress) < time.Second {
 			c.app.Stop()
 			return nil
