@@ -61,6 +61,9 @@ func (e *GoalEditor) handleList() bool {
 	}
 
 	content := e.Primitive.GetText()
+	if content == "" {
+		return false
+	}
 
 	lineStart := utils.FindLineStart(content, start)
 
