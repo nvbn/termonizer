@@ -4,9 +4,11 @@ import (
 	"context"
 	"github.com/gdamore/tcell/v2"
 	"github.com/nvbn/termonizer/internal/model"
+	"github.com/nvbn/termonizer/internal/utils"
 	"github.com/rivo/tview"
 	"golang.design/x/clipboard"
 	"log"
+	"strings"
 )
 
 const goalEditorPlaceholder = `* a things to do
@@ -52,6 +54,31 @@ func (e *GoalEditor) initPrimitive(ctx context.Context) {
 	e.Primitive = p
 }
 
+func (e *GoalEditor) handleList() bool {
+	_, start, end := e.Primitive.GetSelection()
+	if start != end {
+		return false
+	}
+
+	content := e.Primitive.GetText()
+
+	lineStart := utils.FindLineStart(content, start)
+
+	if content[lineStart] != '*' {
+		return false
+	}
+
+	lineEnd := utils.FindLineEnd(content, start)
+	lineContent := content[lineStart : lineEnd+1]
+	if strings.TrimRight(lineContent, " \t\n\r") == "*" {
+		e.Primitive.Replace(lineStart, lineEnd, "")
+		return true
+	}
+
+	e.Primitive.PasteHandler()("\n* ", nil)
+	return true
+}
+
 // manual ctrl+c / ctrl+v / ctrl + x
 func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlC {
@@ -73,6 +100,11 @@ func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 		selected, start, end := e.Primitive.GetSelection()
 		e.Primitive.Replace(start, end, "")
 		clipboard.Write(clipboard.FmtText, []byte(selected))
+		return nil
+	}
+
+	if event.Key() == tcell.KeyEnter && e.handleList() {
+		log.Println("hotkey: enter in list")
 		return nil
 	}
 
