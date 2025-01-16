@@ -6,6 +6,7 @@ import (
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
 	"log"
+	"time"
 )
 
 type CLI struct {
@@ -14,12 +15,14 @@ type CLI struct {
 	container       *tview.Flex
 	panels          []*PeriodPanel
 	currentFocus    int
+	lastEscapePress time.Time
 }
 
 func NewCLI(ctx context.Context, goalsRepository goalsRepository) *CLI {
 	c := &CLI{
 		goalsRepository: goalsRepository,
 	}
+	log.Printf(c.lastEscapePress.String())
 	c.init(ctx)
 	return c
 }
@@ -54,8 +57,14 @@ func (c *CLI) render(ctx context.Context) {
 func (c *CLI) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEsc {
 		log.Printf("hotkey: esc")
-		c.app.Stop()
-		return nil
+
+		now := time.Now()
+		if now.Sub(c.lastEscapePress) < time.Second {
+			c.app.Stop()
+			return nil
+		}
+
+		c.lastEscapePress = now
 	}
 
 	if event.Key() == tcell.KeyCtrlC {

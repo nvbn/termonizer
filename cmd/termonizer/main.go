@@ -18,7 +18,7 @@ var dbPath = flag.String("db", "${HOME}/.termonizer.db", "path to the database")
 var debug = flag.String("debug", "", "debug output path")
 
 var hotkeysDoc = `
-Esc - exit
+Esc Esc - exit
 
 Navigation:
   ⌥↑	future/up goal
