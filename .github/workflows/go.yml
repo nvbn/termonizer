@@ -16,6 +16,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Prepare environment
+      run: sudo apt-get install -y libx11-dev
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
