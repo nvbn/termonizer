@@ -66,19 +66,23 @@ func (e *GoalEditor) handleList() bool {
 	}
 
 	lineStart := utils.FindLineStart(content, start)
-
-	if content[lineStart] != '*' {
+	if lineStart == len(content) || start == lineStart || content[lineStart] != '*' {
 		return false
 	}
 
-	lineEnd := utils.FindLineEnd(content, start)
-	lineContent := content[lineStart : lineEnd+1]
-	if strings.TrimRight(lineContent, " \t\n\r") == "*" {
-		e.Primitive.Replace(lineStart, lineEnd, "")
+	lineEnd := utils.FindLineEnd(content, lineStart)
+	lineContent := content[lineStart:lineEnd]
+	if strings.TrimRight(lineContent, " \t") == "*" {
+		e.Primitive.Replace(lineStart, lineEnd+1, "")
 		return true
 	}
 
-	e.Primitive.PasteHandler()("\n* ", nil)
+	toInsert := "\n*"
+	if !(start < len(content) && content[start] == ' ') {
+		toInsert += " "
+	}
+	e.Primitive.PasteHandler()(toInsert, nil)
+
 	return true
 }
 

@@ -1,6 +1,15 @@
 package utils
 
 func FindLineStart(text string, pos int) int {
+	if text == "" {
+		return 0
+	}
+
+	pos = min(pos, len(text)-1)
+	if text[pos] == '\n' {
+		return pos + 1 // special case, could confuse on empty line
+	}
+
 	for pos := min(pos, len(text)-1); pos > 0; pos-- {
 		if len(text) > pos && text[pos-1] == '\n' {
 			return pos

@@ -14,6 +14,7 @@ func TestFindLineStart(t *testing.T) {
 
 	inputsExpecteds := []testData{
 		{"", 0, 0},
+		{"\n", 0, 1},
 		{"* first task", 7, 0},
 		{"* first task\n* second task", 7, 0},
 		{"* first task\n* second task", 13, 13},
