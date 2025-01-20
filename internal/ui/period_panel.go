@@ -7,10 +7,11 @@ import (
 )
 
 type PeriodPanelProps struct {
-	app             *tview.Application
-	period          model.Period
-	goalsRepository goalsRepository
-	onFocus         func()
+	app                *tview.Application
+	period             model.Period
+	goalsRepository    goalsRepository
+	settingsRepository settingsRepository
+	onFocus            func()
 }
 
 type PeriodPanel struct {
@@ -25,10 +26,11 @@ func NewPeriodPanel(ctx context.Context, props PeriodPanelProps) *PeriodPanel {
 	p := &PeriodPanel{
 		PeriodPanelProps: props,
 		goalsList: NewGoalsList(ctx, GoalsListProps{
-			app:             props.app,
-			period:          props.period,
-			goalsRepository: props.goalsRepository,
-			onFocus:         props.onFocus,
+			app:                props.app,
+			period:             props.period,
+			goalsRepository:    props.goalsRepository,
+			settingsRepository: props.settingsRepository,
+			onFocus:            props.onFocus,
 		}),
 	}
 

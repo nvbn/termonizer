@@ -10,19 +10,26 @@ import (
 )
 
 type CLI struct {
-	app             *tview.Application
-	timeNow         func() time.Time
-	goalsRepository goalsRepository
-	container       *tview.Flex
-	panels          []*PeriodPanel
-	currentFocus    int
-	lastEscapePress time.Time
+	app                *tview.Application
+	timeNow            func() time.Time
+	goalsRepository    goalsRepository
+	settingsRepository settingsRepository
+	container          *tview.Flex
+	panels             []*PeriodPanel
+	currentFocus       int
+	lastEscapePress    time.Time
 }
 
-func NewCLI(ctx context.Context, timeNow func() time.Time, goalsRepository goalsRepository) *CLI {
+func NewCLI(
+	ctx context.Context,
+	timeNow func() time.Time,
+	goalsRepository goalsRepository,
+	settingsRepository settingsRepository,
+) *CLI {
 	c := &CLI{
-		goalsRepository: goalsRepository,
-		timeNow:         timeNow,
+		goalsRepository:    goalsRepository,
+		settingsRepository: settingsRepository,
+		timeNow:            timeNow,
 	}
 	c.init(ctx)
 	return c
@@ -45,10 +52,11 @@ func (c *CLI) render(ctx context.Context) {
 
 	for n, period := range model.Periods {
 		panel := NewPeriodPanel(ctx, PeriodPanelProps{
-			app:             c.app,
-			period:          period,
-			goalsRepository: c.goalsRepository,
-			onFocus:         func() { c.currentFocus = n },
+			app:                c.app,
+			period:             period,
+			goalsRepository:    c.goalsRepository,
+			settingsRepository: c.settingsRepository,
+			onFocus:            func() { c.currentFocus = n },
 		})
 		c.container.AddItem(panel.Primitive, 0, 1, false)
 		c.panels[n] = panel

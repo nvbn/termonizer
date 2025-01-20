@@ -60,23 +60,28 @@ func main() {
 
 	ctx := context.Background()
 
-	goalsStorage, err := storage.NewSQLite(ctx, os.ExpandEnv(*dbPath))
+	sqlite, err := storage.NewSQLite(ctx, os.ExpandEnv(*dbPath))
 	if err != nil {
 		panic(err)
 	}
-	defer goalsStorage.Close()
+	defer sqlite.Close()
 
-	if err := goalsStorage.Cleanup(ctx); err != nil {
+	if err := sqlite.Cleanup(ctx); err != nil {
 		panic(err)
 	}
 
-	goalsRepository := repository.NewGoalsRepository(time.Now, goalsStorage)
+	goalsRepository := repository.NewGoalsRepository(time.Now, sqlite)
+
+	settingsRepository, err := repository.NewSettings(ctx, time.Now, sqlite)
+	if err != nil {
+		panic(err)
+	}
 
 	if err := clipboard.Init(); err != nil {
 		panic(err)
 	}
 
-	if err = ui.NewCLI(ctx, time.Now, goalsRepository).Run(); err != nil {
+	if err = ui.NewCLI(ctx, time.Now, goalsRepository, settingsRepository).Run(); err != nil {
 		panic(err)
 	}
 }

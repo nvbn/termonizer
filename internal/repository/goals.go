@@ -11,9 +11,9 @@ import (
 )
 
 type goalsStorage interface {
-	ReadForPeriod(ctx context.Context, period int) ([]model.Goal, error)
-	CountForPeriod(ctx context.Context, period int) (int, error)
-	Update(ctx context.Context, goals model.Goal) error
+	ReadGoalsForPeriod(ctx context.Context, period int) ([]model.Goal, error)
+	CountGoalsForPeriod(ctx context.Context, period int) (int, error)
+	UpdateGoal(ctx context.Context, goals model.Goal) error
 }
 
 type Goals struct {
@@ -102,7 +102,7 @@ func (r *Goals) padDay(goals []model.Goal) []model.Goal {
 }
 
 func (r *Goals) FindForPeriod(ctx context.Context, period model.Period) ([]model.Goal, error) {
-	goals, err := r.storage.ReadForPeriod(ctx, period)
+	goals, err := r.storage.ReadGoalsForPeriod(ctx, period)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read goals: %w", err)
 	}
@@ -122,10 +122,10 @@ func (r *Goals) FindForPeriod(ctx context.Context, period model.Period) ([]model
 }
 
 func (r *Goals) CountForPeriod(ctx context.Context, period model.Period) (int, error) {
-	return r.storage.CountForPeriod(ctx, period)
+	return r.storage.CountGoalsForPeriod(ctx, period)
 }
 
 func (r *Goals) Update(ctx context.Context, goal model.Goal) error {
 	goal.Updated = r.timeNow()
-	return r.storage.Update(ctx, goal)
+	return r.storage.UpdateGoal(ctx, goal)
 }

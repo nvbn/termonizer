@@ -242,25 +242,25 @@ func main() {
 	defer goalsStorage.Close()
 
 	for _, goal := range generateYears() {
-		if err := goalsStorage.Update(ctx, goal); err != nil {
+		if err := goalsStorage.UpdateGoal(ctx, goal); err != nil {
 			panic(err)
 		}
 	}
 
 	for _, goal := range generateQuarters() {
-		if err := goalsStorage.Update(ctx, goal); err != nil {
+		if err := goalsStorage.UpdateGoal(ctx, goal); err != nil {
 			panic(err)
 		}
 	}
 
 	for _, goal := range generateWeeks() {
-		if err := goalsStorage.Update(ctx, goal); err != nil {
+		if err := goalsStorage.UpdateGoal(ctx, goal); err != nil {
 			panic(err)
 		}
 	}
 
 	for _, goal := range generateDays() {
-		if err := goalsStorage.Update(ctx, goal); err != nil {
+		if err := goalsStorage.UpdateGoal(ctx, goal); err != nil {
 			panic(err)
 		}
 	}

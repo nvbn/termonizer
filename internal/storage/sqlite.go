@@ -32,18 +32,30 @@ func NewSQLite(ctx context.Context, path string) (*SQLite, error) {
 }
 
 func (s *SQLite) initSchema(ctx context.Context) error {
-	_, err := s.db.ExecContext(ctx, `
+	if _, err := s.db.ExecContext(ctx, `
 		create table if not exists Goals (
 		    id text primary key,
 		    period integer,
 		    content text,
 		    start timestamp,
 		    updated timestamp
-		)`)
-	return err
+		)`); err != nil {
+		return fmt.Errorf("failed to create Goals table: %w", err)
+	}
+
+	if _, err := s.db.ExecContext(ctx, `
+		create table if not exists Settings (
+		    id text primary key,
+		    value string,
+		    updated timestamp
+		)`); err != nil {
+		return fmt.Errorf("failed to create Settings table: %w", err)
+	}
+
+	return nil
 }
 
-func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, error) {
+func (s *SQLite) ReadGoalsForPeriod(ctx context.Context, period int) ([]model.Goal, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		select
 		    id,
@@ -58,7 +70,7 @@ func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, e
 		order by start desc
 	`, period)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query: %w", err)
+		return nil, fmt.Errorf("failed to query goals: %w", err)
 	}
 	defer rows.Close()
 
@@ -72,7 +84,7 @@ func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, e
 			&goal.Start,
 			&goal.Updated,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan: %w", err)
+			return nil, fmt.Errorf("failed to scan goals: %w", err)
 		}
 		goal.Start = utils.IgnoreTZ(goal.Start)
 		result = append(result, goal)
@@ -81,7 +93,7 @@ func (s *SQLite) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, e
 	return result, nil
 }
 
-func (s *SQLite) CountForPeriod(ctx context.Context, period int) (int, error) {
+func (s *SQLite) CountGoalsForPeriod(ctx context.Context, period int) (int, error) {
 	var count int
 	if err := s.db.QueryRowContext(ctx, `
 		select
@@ -97,7 +109,7 @@ func (s *SQLite) CountForPeriod(ctx context.Context, period int) (int, error) {
 	return count, nil
 }
 
-func (s *SQLite) Update(ctx context.Context, goals model.Goal) error {
+func (s *SQLite) UpdateGoal(ctx context.Context, goals model.Goal) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		`
@@ -114,6 +126,34 @@ func (s *SQLite) Update(ctx context.Context, goals model.Goal) error {
 		goals.Content,
 		goals.Start,
 		goals.Updated,
+	)
+	return err
+}
+
+func (s *SQLite) ReadSettings(ctx context.Context) ([]model.Setting, error) {
+	rows, err := s.db.QueryContext(ctx, `select id, value, updated from Settings`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query settings: %w", err)
+	}
+	defer rows.Close()
+
+	result := make([]model.Setting, 0)
+	for rows.Next() {
+		setting := model.Setting{}
+		if err := rows.Scan(&setting.ID, &setting.Value, &setting.Updated); err != nil {
+			return nil, fmt.Errorf("failed to scan settings: %w", err)
+		}
+		result = append(result, setting)
+	}
+
+	return result, nil
+}
+
+func (s *SQLite) UpdateSetting(ctx context.Context, settings model.Setting) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		`insert or replace into Settings (id, value, updated) values (?, ?, ?)`,
+		settings.ID, settings.Value, settings.Updated,
 	)
 	return err
 }

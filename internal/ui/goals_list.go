@@ -9,21 +9,14 @@ import (
 	"log"
 )
 
-// TODO: make configurable
-var periodToAmount = map[model.Period]int{
-	model.Year:    4,
-	model.Quarter: 4,
-	model.Week:    4,
-	model.Day:     5,
-}
-
 const editorsCacheSize = 256
 
 type GoalsListProps struct {
-	app             *tview.Application
-	period          model.Period
-	goalsRepository goalsRepository
-	onFocus         func()
+	app                *tview.Application
+	period             model.Period
+	goalsRepository    goalsRepository
+	settingsRepository settingsRepository
+	onFocus            func()
 }
 
 type GoalsList struct {
@@ -35,7 +28,6 @@ type GoalsList struct {
 	idToPosition map[string]int
 	offset       int
 	currentFocus int
-	amountToShow int
 
 	editorsCache *lru.Cache[string, *GoalEditor] // rendered editors cache to persist editor state
 }
@@ -48,7 +40,6 @@ func NewGoalsList(ctx context.Context, props GoalsListProps) *GoalsList {
 
 	l := &GoalsList{
 		GoalsListProps: props,
-		amountToShow:   periodToAmount[props.period],
 		editorsCache:   editorsCache,
 	}
 
@@ -86,7 +77,7 @@ func (l *GoalsList) ScrollPast(ctx context.Context) {
 		log.Fatalf("failed to count goals: %v", err)
 	}
 
-	if l.offset == (amount - l.amountToShow) {
+	if l.offset == (amount - l.amountToShow()) {
 		return
 	}
 
@@ -118,8 +109,8 @@ func (l *GoalsList) getVisibleGoals(ctx context.Context) []model.Goal {
 		log.Fatalf("failed to find goals: %v", err)
 	}
 
-	if l.offset+l.amountToShow <= len(goals) {
-		return goals[l.offset : l.offset+l.amountToShow]
+	if l.offset+l.amountToShow() <= len(goals) {
+		return goals[l.offset : l.offset+l.amountToShow()]
 	}
 
 	return goals
@@ -133,33 +124,53 @@ func (l *GoalsList) initPrimitive(ctx context.Context) {
 }
 
 func (l *GoalsList) zoomIn(ctx context.Context) {
-	if l.amountToShow == 1 {
+	amountToShow := l.amountToShow()
+
+	if amountToShow == 1 {
 		return
 	}
 
-	if l.amountToShow > len(l.inView) && len(l.inView) > 1 {
-		l.amountToShow = len(l.inView) - 1
+	if amountToShow > len(l.inView) && len(l.inView) > 1 {
+		amountToShow = len(l.inView) - 1
 	} else {
-		l.amountToShow -= 1
+		amountToShow -= 1
 	}
 
-	if l.currentFocus >= l.amountToShow {
+	if l.currentFocus >= amountToShow {
 		l.offset += 1
 		l.currentFocus -= 1
+	}
+
+	if err := l.setAmountToShow(ctx, amountToShow); err != nil {
+		log.Fatalf("failed to set amount to show: %v", err)
 	}
 
 	l.render(ctx)
 }
 
 func (l *GoalsList) zoomOut(ctx context.Context) {
-	l.amountToShow += 1
+	amountToShow := l.amountToShow()
 
-	if l.amountToShow <= len(l.getVisibleGoals(ctx)) && l.offset > 0 {
+	amountToShow += 1
+
+	if amountToShow <= len(l.getVisibleGoals(ctx)) && l.offset > 0 {
 		l.offset -= 1
 		l.currentFocus += 1
 	}
 
+	if err := l.setAmountToShow(ctx, amountToShow); err != nil {
+		log.Fatalf("failed to set amount to show: %v", err)
+	}
+
 	l.render(ctx)
+}
+
+func (l *GoalsList) amountToShow() int {
+	return l.settingsRepository.GetAmountForPeriod(l.period)
+}
+
+func (l *GoalsList) setAmountToShow(ctx context.Context, amount int) error {
+	return l.settingsRepository.SetAmountForPeriod(ctx, l.period, amount)
 }
 
 func (l *GoalsList) handleHotkeys(ctx context.Context, event *tcell.EventKey) *tcell.EventKey {

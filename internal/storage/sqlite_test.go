@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestSQLite(t *testing.T) {
+func TestSQLite_Goals(t *testing.T) {
 	ctx := context.Background()
 	s, err := NewSQLite(ctx, ":memory:")
 	if err != nil {
@@ -18,7 +18,7 @@ func TestSQLite(t *testing.T) {
 	}
 	defer s.Close()
 
-	goals, err := s.ReadForPeriod(ctx, 0)
+	goals, err := s.ReadGoalsForPeriod(ctx, 0)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
@@ -49,12 +49,12 @@ func TestSQLite(t *testing.T) {
 		}}
 
 	for _, goal := range goals {
-		if err = s.Update(ctx, goal); err != nil {
+		if err = s.UpdateGoal(ctx, goal); err != nil {
 			t.Error("unexpected error:", err)
 		}
 	}
 
-	goals, err = s.ReadForPeriod(ctx, 0)
+	goals, err = s.ReadGoalsForPeriod(ctx, 0)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
@@ -63,12 +63,50 @@ func TestSQLite(t *testing.T) {
 		t.Errorf("expected %v, got %v", goals[:1], goals)
 	}
 
-	amount, err := s.CountForPeriod(ctx, 0)
+	amount, err := s.CountGoalsForPeriod(ctx, 0)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
 	if amount != 1 {
 		t.Errorf("expected 1, got %d", amount)
+	}
+}
+
+func TestSQLite_Settings(t *testing.T) {
+	ctx := context.Background()
+	s, err := NewSQLite(ctx, ":memory:")
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+	defer s.Close()
+
+	settings, err := s.ReadSettings(ctx)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	if len(settings) != 0 {
+		t.Errorf("expected 0 settings, got %d", len(settings))
+	}
+
+	setting := model.Setting{
+		ID:      uuid.New().String(),
+		Value:   "settings value",
+		Updated: time.Now().UTC(),
+	}
+
+	if err := s.UpdateSetting(ctx, setting); err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	settings, err = s.ReadSettings(ctx)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	expected := []model.Setting{setting}
+	if !reflect.DeepEqual(expected, settings) {
+		t.Errorf("expected %v, got %v", expected, settings)
 	}
 }

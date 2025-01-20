@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
-type storageMock struct{}
+type goalsStorageMock struct{}
 
-func (m *storageMock) ReadForPeriod(ctx context.Context, period int) ([]model.Goal, error) {
+func (m *goalsStorageMock) ReadGoalsForPeriod(ctx context.Context, period int) ([]model.Goal, error) {
 	return make([]model.Goal, 0), nil
 }
 
-func (m *storageMock) Update(ctx context.Context, goals model.Goal) error {
+func (m *goalsStorageMock) UpdateGoal(ctx context.Context, goals model.Goal) error {
 	return nil
 }
 
-func (m *storageMock) CountForPeriod(ctx context.Context, period int) (int, error) {
+func (m *goalsStorageMock) CountGoalsForPeriod(ctx context.Context, period int) (int, error) {
 	return 0, nil
 }
 
@@ -29,7 +29,7 @@ func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
 		func() time.Time {
 			return time.Date(2024, 12, 10, 0, 0, 0, 0, time.Local)
 		},
-		&storageMock{})
+		&goalsStorageMock{})
 
 	periodToExpectedGoalTitle := map[model.Period]string{
 		model.Year:    "2024",
