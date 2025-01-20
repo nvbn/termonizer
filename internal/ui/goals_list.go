@@ -29,6 +29,8 @@ type GoalsList struct {
 	Primitive *tview.Flex
 
 	inView       []*GoalEditor
+	idToEditor   map[string]*GoalEditor
+	idToPosition map[string]int
 	offset       int
 	currentFocus int
 	amountToShow int
@@ -191,24 +193,42 @@ func (l *GoalsList) render(ctx context.Context) {
 
 	goals := l.getVisibleGoals(ctx)
 
+	nextIdToEditor := make(map[string]*GoalEditor)
+	nextIdToPosition := make(map[string]int)
 	nextInView := make([]*GoalEditor, 0, len(goals))
 	for n, goal := range goals {
-		editor := NewGoalEditor(ctx, GoalEditorProps{
-			app:             l.app,
-			goalsRepository: l.goalsRepository,
-			goal:            goal,
-			onFocus: func() {
-				l.currentFocus = n
-				l.onFocus()
-			},
-		})
+		nextIdToPosition[goal.ID] = n
+
+		var editor *GoalEditor
+		if l.idToEditor[goal.ID] != nil {
+			editor = l.idToEditor[goal.ID]
+		} else {
+			editor = NewGoalEditor(ctx, GoalEditorProps{
+				app:             l.app,
+				goalsRepository: l.goalsRepository,
+				goal:            goal,
+				onFocus: func() {
+					// wtf, race condition / data access between threads will bite me
+					if pos, ok := l.idToPosition[goal.ID]; ok {
+						l.currentFocus = pos
+						l.onFocus()
+					}
+				},
+			})
+		}
 
 		nextInView = append(nextInView, editor)
+		nextIdToEditor[goal.ID] = editor
 		l.Primitive.AddItem(editor.Primitive, 0, 1, false)
 
 		if l.currentFocus == n {
 			l.app.SetFocus(editor.Primitive)
 		}
 	}
+
 	l.inView = nextInView
+	l.idToEditor = nextIdToEditor
+	l.idToPosition = nextIdToPosition
+
+	log.Printf("on render %+v", l.idToPosition)
 }
