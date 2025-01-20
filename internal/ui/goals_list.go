@@ -208,12 +208,10 @@ func (l *GoalsList) render(ctx context.Context) {
 				goalsRepository: l.goalsRepository,
 				goal:            goal,
 				onFocus: func() {
-					// wtf, race condition / data access between threads will bite me
+					// could be called during the first rendering
 					if pos, ok := l.idToPosition[goal.ID]; ok {
 						l.currentFocus = pos
 						l.onFocus()
-					} else {
-						log.Println("goal: no position, fix your concurrency!")
 					}
 				},
 			})
