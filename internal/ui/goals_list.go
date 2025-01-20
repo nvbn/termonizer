@@ -212,6 +212,8 @@ func (l *GoalsList) render(ctx context.Context) {
 					if pos, ok := l.idToPosition[goal.ID]; ok {
 						l.currentFocus = pos
 						l.onFocus()
+					} else {
+						log.Println("goal: no position, fix your concurrency!")
 					}
 				},
 			})
