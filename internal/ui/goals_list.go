@@ -229,6 +229,4 @@ func (l *GoalsList) render(ctx context.Context) {
 	l.inView = nextInView
 	l.idToEditor = nextIdToEditor
 	l.idToPosition = nextIdToPosition
-
-	log.Printf("on render %+v", l.idToPosition)
 }
