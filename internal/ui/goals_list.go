@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"github.com/gdamore/tcell/v2"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
 	"log"
@@ -15,6 +16,8 @@ var periodToAmount = map[model.Period]int{
 	model.Week:    4,
 	model.Day:     5,
 }
+
+const editorsCacheSize = 256
 
 type GoalsListProps struct {
 	app             *tview.Application
@@ -29,17 +32,24 @@ type GoalsList struct {
 	Primitive *tview.Flex
 
 	inView       []*GoalEditor
-	idToEditor   map[string]*GoalEditor
 	idToPosition map[string]int
 	offset       int
 	currentFocus int
 	amountToShow int
+
+	editorsCache *lru.Cache[string, *GoalEditor] // rendered editors cache to persist editor state
 }
 
 func NewGoalsList(ctx context.Context, props GoalsListProps) *GoalsList {
+	editorsCache, err := lru.New[string, *GoalEditor](editorsCacheSize)
+	if err != nil {
+		log.Fatalf("failed to init editors cache: %v", err)
+	}
+
 	l := &GoalsList{
 		GoalsListProps: props,
 		amountToShow:   periodToAmount[props.period],
+		editorsCache:   editorsCache,
 	}
 
 	l.initPrimitive(ctx)
@@ -193,15 +203,14 @@ func (l *GoalsList) render(ctx context.Context) {
 
 	goals := l.getVisibleGoals(ctx)
 
-	nextIdToEditor := make(map[string]*GoalEditor)
 	nextIdToPosition := make(map[string]int)
 	nextInView := make([]*GoalEditor, 0, len(goals))
 	for n, goal := range goals {
 		nextIdToPosition[goal.ID] = n
 
 		var editor *GoalEditor
-		if l.idToEditor[goal.ID] != nil {
-			editor = l.idToEditor[goal.ID]
+		if existingEditor, ok := l.editorsCache.Get(goal.ID); ok {
+			editor = existingEditor
 		} else {
 			editor = NewGoalEditor(ctx, GoalEditorProps{
 				app:             l.app,
@@ -215,10 +224,11 @@ func (l *GoalsList) render(ctx context.Context) {
 					}
 				},
 			})
+
+			l.editorsCache.Add(goal.ID, editor)
 		}
 
 		nextInView = append(nextInView, editor)
-		nextIdToEditor[goal.ID] = editor
 		l.Primitive.AddItem(editor.Primitive, 0, 1, false)
 
 		if l.currentFocus == n {
@@ -227,6 +237,5 @@ func (l *GoalsList) render(ctx context.Context) {
 	}
 
 	l.inView = nextInView
-	l.idToEditor = nextIdToEditor
 	l.idToPosition = nextIdToPosition
 }
