@@ -12,3 +12,6 @@ generate-test-db:
 
 run-test-db:
 	go run cmd/termonizer/main.go -db test.db -debug debug.log
+
+log:
+	tail -f debug.log
