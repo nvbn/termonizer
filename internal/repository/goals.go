@@ -88,7 +88,7 @@ func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 }
 
 func (r *Goals) padDay(goals []model.Goal) []model.Goal {
-	if len(goals) == 0 || goals[0].Start.Day() < r.timeNow().Day() {
+	if len(goals) == 0 || goals[0].Start.Truncate(24*time.Hour).Before(r.timeNow().Truncate(24*time.Hour)) {
 		goals = slices.Insert(goals, 0, model.Goal{
 			ID:      uuid.New().String(),
 			Period:  model.Day,
