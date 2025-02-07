@@ -1,6 +1,7 @@
 package model
 
 import (
+	"cmp"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/utils"
@@ -77,5 +78,41 @@ func (g *Goal) Title() string {
 		return fmt.Sprintf("%s %s", date, weekDay)
 	}
 
-	panic("Unknown period")
+	panic("unreachable!")
+}
+
+// CompareStart look at https://pkg.go.dev/cmp, fuck it's ugly
+func (g *Goal) CompareStart(dt time.Time) int {
+	switch g.Period {
+	case Year:
+		return cmp.Compare(g.Start.Year(), dt.Year())
+	case Quarter:
+		compared := cmp.Compare(g.Start.Year(), dt.Year())
+		if compared == 0 {
+			return cmp.Compare(utils.QuarterFromTime(g.Start), utils.QuarterFromTime(dt))
+		} else {
+			return compared
+		}
+	case Week:
+		goalYear, goalWeek := g.Start.ISOWeek()
+		dtYear, dtWeek := dt.ISOWeek()
+		compared := cmp.Compare(goalYear, dtYear)
+		if compared == 0 {
+			return cmp.Compare(goalWeek, dtWeek)
+		} else {
+			return compared
+		}
+	case Day:
+		goalTruncated := g.Start.Truncate(24 * time.Hour)
+		dtTruncated := dt.Truncate(24 * time.Hour)
+		if goalTruncated.Before(dtTruncated) {
+			return -1
+		} else if goalTruncated.After(dtTruncated) {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	panic("unreachable!")
 }

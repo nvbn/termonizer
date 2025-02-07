@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/nvbn/termonizer/internal/model"
-	"github.com/nvbn/termonizer/internal/utils"
 	"slices"
 	"time"
 )
@@ -29,7 +28,8 @@ func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) *Goals {
 
 func (r *Goals) padYear(goals []model.Goal) []model.Goal {
 	now := r.timeNow()
-	if len(goals) == 0 || goals[0].Start.Year() < now.Year() {
+
+	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForYear(now))
 	}
 
@@ -37,15 +37,9 @@ func (r *Goals) padYear(goals []model.Goal) []model.Goal {
 }
 
 func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
-	lastQuarter := -1
-	if len(goals) > 0 {
-		lastGoals := goals[0]
-		lastQuarter = utils.QuarterFromTime(lastGoals.Start)
-	}
-
 	now := r.timeNow()
-	currentQuarter := utils.QuarterFromTime(now)
-	if lastQuarter < currentQuarter {
+
+	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForQuarter(now))
 	}
 
@@ -53,15 +47,9 @@ func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
 }
 
 func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
-	lastWeek := -1
-	if len(goals) > 0 {
-		lastGoals := goals[0]
-		_, lastWeek = lastGoals.Start.ISOWeek()
-	}
-
 	now := r.timeNow()
-	_, currentWeek := now.ISOWeek()
-	if lastWeek < currentWeek {
+
+	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForWeek(now))
 	}
 
@@ -70,7 +58,8 @@ func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 
 func (r *Goals) padDay(goals []model.Goal) []model.Goal {
 	now := r.timeNow()
-	if len(goals) == 0 || goals[0].Start.Truncate(24*time.Hour).Before(now.Truncate(24*time.Hour)) {
+
+	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForDay(now))
 	}
 

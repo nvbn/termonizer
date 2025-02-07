@@ -30,8 +30,7 @@ Text editing:
 ## Development
 
 Prerequisites:
-* [go 1.23+](https://go.dev/doc/install) 
-* 
+* [go 1.23+](https://go.dev/doc/install)
 
 Run:
 ```
