@@ -219,6 +219,7 @@ func (l *GoalsList) render(ctx context.Context) {
 
 	nextIdToPosition := make(map[string]int)
 	nextInView := make([]*GoalEditor, 0, len(goals))
+	idToFocusNow := ""
 	for n, goal := range goals {
 		nextIdToPosition[goal.ID] = n
 
@@ -247,9 +248,11 @@ func (l *GoalsList) render(ctx context.Context) {
 		l.Primitive.AddItem(editor.Primitive, 0, 1, false)
 
 		if l.currentFocus == n {
-			l.app.SetFocus(editor.Primitive)
+			idToFocusNow = goal.ID
 		}
 	}
+
+	l.app.SetFocus(nextInView[nextIdToPosition[idToFocusNow]].Primitive)
 
 	l.inView = nextInView
 	l.idToPosition = nextIdToPosition
