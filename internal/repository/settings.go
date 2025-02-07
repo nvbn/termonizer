@@ -69,8 +69,6 @@ func (s *Settings) init(ctx context.Context) error {
 		}
 	}
 
-	log.Printf("%v", s.periodToAmount)
-
 	return nil
 }
 
