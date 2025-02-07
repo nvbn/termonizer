@@ -158,7 +158,8 @@ func (s *SQLite) UpdateSetting(ctx context.Context, settings model.Setting) erro
 	return err
 }
 
-func (s *SQLite) Cleanup(ctx context.Context) error {
+// Vacuum removes old empty goals
+func (s *SQLite) Vacuum(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, `
 		delete from Goals
 		where content = ""

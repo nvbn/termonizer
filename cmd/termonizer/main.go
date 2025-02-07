@@ -64,9 +64,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer sqlite.Close()
+	defer func() {
+		if err := sqlite.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
-	if err := sqlite.Cleanup(ctx); err != nil {
+	if err := sqlite.Vacuum(ctx); err != nil {
 		panic(err)
 	}
 
