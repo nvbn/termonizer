@@ -20,6 +20,8 @@ const goalEditorPlaceholder = `* a things to do
 Some notes. This is just a placeholder in some opinionated format.
 `
 
+const futureGoalEditorPlaceholder = `Goals and notes for the future`
+
 type GoalEditorProps struct {
 	app             *tview.Application
 	timeNow         func() time.Time
@@ -55,15 +57,23 @@ func (e *GoalEditor) initPrimitive(ctx context.Context) {
 
 	p.SetBorder(true)
 	p.SetText(e.goal.Content, false)
-	p.SetPlaceholder(goalEditorPlaceholder)
+
+	if e.goal.CompareStart(e.timeNow()) == 1 {
+		p.SetPlaceholder(futureGoalEditorPlaceholder)
+	} else {
+		p.SetPlaceholder(goalEditorPlaceholder)
+	}
+
 	p.SetChangedFunc(func() {
 		e.goal.Content = p.GetText()
 		if err := e.goalsRepository.Update(ctx, e.goal); err != nil {
 			log.Fatalf("failed to update goal: %s", err)
 		}
 	})
+
 	p.SetFocusFunc(e.onFocus)
 	p.SetInputCapture(e.handleHotkeys)
+
 	e.Primitive = p
 }
 
