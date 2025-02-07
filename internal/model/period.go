@@ -21,7 +21,8 @@ func PeriodName(p Period) string {
 		return "Week"
 	case Day:
 		return "Day"
+	default:
+		panic("unreachable!")
 	}
 
-	panic("Unknown period")
 }

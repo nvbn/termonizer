@@ -76,9 +76,9 @@ func (g *Goal) FormatStart() string {
 		date := g.Start.Format("2006-01-02")
 		weekDay := g.Start.Weekday()
 		return fmt.Sprintf("%s %s", date, weekDay)
+	default:
+		panic("unreachable!")
 	}
-
-	panic("unreachable!")
 }
 
 // CompareStart look at https://pkg.go.dev/cmp, fuck it's ugly
@@ -112,7 +112,7 @@ func (g *Goal) CompareStart(dt time.Time) int {
 		} else {
 			return 0
 		}
+	default:
+		panic("unreachable!")
 	}
-
-	panic("unreachable!")
 }

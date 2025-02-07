@@ -97,9 +97,9 @@ func (r *Goals) FindForPeriod(ctx context.Context, period model.Period) ([]model
 		return r.padWeeks(goals), nil
 	case model.Day:
 		return r.padDays(goals), nil
+	default:
+		panic("unreachable!")
 	}
-
-	panic("Unknown period")
 }
 
 func (r *Goals) CountForPeriod(ctx context.Context, period model.Period) (int, error) {
