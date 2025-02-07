@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/nvbn/termonizer/internal/utils"
 	"slices"
@@ -29,15 +28,9 @@ func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) *Goals {
 }
 
 func (r *Goals) padYear(goals []model.Goal) []model.Goal {
-	if len(goals) == 0 || goals[0].Start.Year() < r.timeNow().Year() {
-		start := time.Date(r.timeNow().Year(), 1, 1, 0, 0, 0, 0, time.Local)
-		goals = slices.Insert(goals, 0, model.Goal{
-			ID:      uuid.New().String(),
-			Period:  model.Year,
-			Content: "",
-			Start:   start,
-			Updated: r.timeNow(),
-		})
+	now := r.timeNow()
+	if len(goals) == 0 || goals[0].Start.Year() < now.Year() {
+		goals = slices.Insert(goals, 0, model.NewGoalForYear(now))
 	}
 
 	return goals
@@ -50,17 +43,10 @@ func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
 		lastQuarter = utils.QuarterFromTime(lastGoals.Start)
 	}
 
-	currentQuarter := utils.QuarterFromTime(r.timeNow())
-
+	now := r.timeNow()
+	currentQuarter := utils.QuarterFromTime(now)
 	if lastQuarter < currentQuarter {
-		currentQuarterStartDate := time.Date(r.timeNow().Year(), time.Month(currentQuarter*3-2), 1, 0, 0, 0, 0, time.Local)
-		goals = slices.Insert(goals, 0, model.Goal{
-			ID:      uuid.New().String(),
-			Period:  model.Quarter,
-			Content: "",
-			Start:   currentQuarterStartDate,
-			Updated: r.timeNow(),
-		})
+		goals = slices.Insert(goals, 0, model.NewGoalForQuarter(now))
 	}
 
 	return goals
@@ -73,29 +59,19 @@ func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
 		_, lastWeek = lastGoals.Start.ISOWeek()
 	}
 
-	_, currentWeek := r.timeNow().ISOWeek()
+	now := r.timeNow()
+	_, currentWeek := now.ISOWeek()
 	if lastWeek < currentWeek {
-		goals = slices.Insert(goals, 0, model.Goal{
-			ID:      uuid.New().String(),
-			Period:  model.Week,
-			Content: "",
-			Start:   utils.WeekStart(r.timeNow()),
-			Updated: r.timeNow(),
-		})
+		goals = slices.Insert(goals, 0, model.NewGoalForWeek(now))
 	}
 
 	return goals
 }
 
 func (r *Goals) padDay(goals []model.Goal) []model.Goal {
-	if len(goals) == 0 || goals[0].Start.Truncate(24*time.Hour).Before(r.timeNow().Truncate(24*time.Hour)) {
-		goals = slices.Insert(goals, 0, model.Goal{
-			ID:      uuid.New().String(),
-			Period:  model.Day,
-			Content: "",
-			Start:   r.timeNow(),
-			Updated: r.timeNow(),
-		})
+	now := r.timeNow()
+	if len(goals) == 0 || goals[0].Start.Truncate(24*time.Hour).Before(now.Truncate(24*time.Hour)) {
+		goals = slices.Insert(goals, 0, model.NewGoalForDay(now))
 	}
 
 	return goals
