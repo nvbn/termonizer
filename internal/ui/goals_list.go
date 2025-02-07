@@ -7,12 +7,14 @@ import (
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
 	"log"
+	"time"
 )
 
 const editorsCacheSize = 256
 
 type GoalsListProps struct {
 	app                *tview.Application
+	timeNow            func() time.Time
 	period             model.Period
 	goalsRepository    goalsRepository
 	settingsRepository settingsRepository
@@ -226,6 +228,7 @@ func (l *GoalsList) render(ctx context.Context) {
 		} else {
 			editor = NewGoalEditor(ctx, GoalEditorProps{
 				app:             l.app,
+				timeNow:         l.timeNow,
 				goalsRepository: l.goalsRepository,
 				goal:            goal,
 				onFocus: func() {

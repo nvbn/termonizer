@@ -53,6 +53,7 @@ func (c *CLI) render(ctx context.Context) {
 	for n, period := range model.Periods {
 		panel := NewPeriodPanel(ctx, PeriodPanelProps{
 			app:                c.app,
+			timeNow:            c.timeNow,
 			period:             period,
 			goalsRepository:    c.goalsRepository,
 			settingsRepository: c.settingsRepository,

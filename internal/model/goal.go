@@ -60,7 +60,7 @@ func NewGoalForYear(dt time.Time) Goal {
 	}
 }
 
-func (g *Goal) Title() string {
+func (g *Goal) FormatStart() string {
 	switch g.Period {
 	case Year:
 		return g.Start.Format("2006")

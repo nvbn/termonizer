@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/rivo/tview"
+	"time"
 )
 
 type PeriodPanelProps struct {
 	app                *tview.Application
+	timeNow            func() time.Time
 	period             model.Period
 	goalsRepository    goalsRepository
 	settingsRepository settingsRepository
@@ -27,6 +29,7 @@ func NewPeriodPanel(ctx context.Context, props PeriodPanelProps) *PeriodPanel {
 		PeriodPanelProps: props,
 		goalsList: NewGoalsList(ctx, GoalsListProps{
 			app:                props.app,
+			timeNow:            props.timeNow,
 			period:             props.period,
 			goalsRepository:    props.goalsRepository,
 			settingsRepository: props.settingsRepository,

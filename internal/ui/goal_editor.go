@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/nvbn/termonizer/internal/utils"
@@ -9,6 +10,7 @@ import (
 	"golang.design/x/clipboard"
 	"log"
 	"strings"
+	"time"
 )
 
 const goalEditorPlaceholder = `* a things to do
@@ -20,6 +22,7 @@ Some notes. This is just a placeholder in some opinionated format.
 
 type GoalEditorProps struct {
 	app             *tview.Application
+	timeNow         func() time.Time
 	goalsRepository goalsRepository
 	goal            model.Goal
 	onFocus         func()
@@ -39,7 +42,17 @@ func NewGoalEditor(ctx context.Context, props GoalEditorProps) *GoalEditor {
 
 func (e *GoalEditor) initPrimitive(ctx context.Context) {
 	p := tview.NewTextArea()
-	p.SetTitle(e.goal.Title())
+
+	switch e.goal.CompareStart(e.timeNow()) {
+	case 1:
+		p.SetTitle(fmt.Sprintf("%s (future)", e.goal.FormatStart()))
+		p.SetTitleColor(tcell.ColorBlue)
+	case 0:
+		p.SetTitle(fmt.Sprintf("%s (now)", e.goal.FormatStart()))
+	case -1:
+		p.SetTitle(e.goal.FormatStart())
+	}
+
 	p.SetBorder(true)
 	p.SetText(e.goal.Content, false)
 	p.SetPlaceholder(goalEditorPlaceholder)

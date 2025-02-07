@@ -32,7 +32,7 @@ func TestGoal_Title(t *testing.T) {
 
 	for goal, expectedTitle := range goalsToExpectedTitle {
 		t.Run(fmt.Sprintf("%+v", goal), func(t *testing.T) {
-			if actualTitle := goal.Title(); actualTitle != expectedTitle {
+			if actualTitle := goal.FormatStart(); actualTitle != expectedTitle {
 				t.Errorf("expected title %q, got %q", expectedTitle, actualTitle)
 			}
 		})

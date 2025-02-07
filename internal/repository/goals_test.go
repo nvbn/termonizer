@@ -49,12 +49,12 @@ func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
 				t.Errorf("expected 2 goals, got %d", len(actualTitle))
 			}
 
-			if actualTitle[0].Title() != expectedTitle[0] {
-				t.Errorf("expected title %q, got %q", expectedTitle[0], actualTitle[0].Title())
+			if actualTitle[0].FormatStart() != expectedTitle[0] {
+				t.Errorf("expected title %q, got %q", expectedTitle[0], actualTitle[0].FormatStart())
 			}
 
-			if actualTitle[1].Title() != expectedTitle[1] {
-				t.Errorf("expected title %q, got %q", expectedTitle[1], actualTitle[1].Title())
+			if actualTitle[1].FormatStart() != expectedTitle[1] {
+				t.Errorf("expected title %q, got %q", expectedTitle[1], actualTitle[1].FormatStart())
 			}
 		})
 	}
