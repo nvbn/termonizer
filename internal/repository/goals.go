@@ -26,41 +26,57 @@ func NewGoalsRepository(timeNow func() time.Time, storage goalsStorage) *Goals {
 	}
 }
 
-func (r *Goals) padYear(goals []model.Goal) []model.Goal {
+func (r *Goals) padYears(goals []model.Goal) []model.Goal {
 	now := r.timeNow()
-
 	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForYear(now))
 	}
 
+	nowNextYear := now.AddDate(1, 0, 0)
+	if goals[0].CompareStart(nowNextYear) == -1 {
+		goals = slices.Insert(goals, 0, model.NewGoalForYear(nowNextYear))
+	}
+
 	return goals
 }
 
-func (r *Goals) padQuarter(goals []model.Goal) []model.Goal {
+func (r *Goals) padQuarters(goals []model.Goal) []model.Goal {
 	now := r.timeNow()
-
 	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForQuarter(now))
 	}
 
-	return goals
-}
-
-func (r *Goals) padWeek(goals []model.Goal) []model.Goal {
-	now := r.timeNow()
-
-	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
-		goals = slices.Insert(goals, 0, model.NewGoalForWeek(now))
+	nowNextQuarter := now.AddDate(0, 3, 0)
+	if goals[0].CompareStart(nowNextQuarter) == -1 {
+		goals = slices.Insert(goals, 0, model.NewGoalForQuarter(nowNextQuarter))
 	}
 
 	return goals
 }
 
-func (r *Goals) padDay(goals []model.Goal) []model.Goal {
+func (r *Goals) padWeeks(goals []model.Goal) []model.Goal {
 	now := r.timeNow()
+	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
+		goals = slices.Insert(goals, 0, model.NewGoalForWeek(now))
+	}
 
+	nowNextWeek := now.AddDate(0, 0, 7)
+	if goals[0].CompareStart(nowNextWeek) == -1 {
+		goals = slices.Insert(goals, 0, model.NewGoalForWeek(nowNextWeek))
+	}
+
+	return goals
+}
+
+func (r *Goals) padDays(goals []model.Goal) []model.Goal {
+	now := r.timeNow()
 	if len(goals) == 0 || goals[0].CompareStart(now) == -1 {
 		goals = slices.Insert(goals, 0, model.NewGoalForDay(now))
+	}
+
+	nowNextDay := now.AddDate(0, 0, 1)
+	if goals[0].CompareStart(nowNextDay) == -1 {
+		goals = slices.Insert(goals, 0, model.NewGoalForDay(nowNextDay))
 	}
 
 	return goals
@@ -74,13 +90,13 @@ func (r *Goals) FindForPeriod(ctx context.Context, period model.Period) ([]model
 
 	switch period {
 	case model.Year:
-		return r.padYear(goals), nil
+		return r.padYears(goals), nil
 	case model.Quarter:
-		return r.padQuarter(goals), nil
+		return r.padQuarters(goals), nil
 	case model.Week:
-		return r.padWeek(goals), nil
+		return r.padWeeks(goals), nil
 	case model.Day:
-		return r.padDay(goals), nil
+		return r.padDays(goals), nil
 	}
 
 	panic("Unknown period")

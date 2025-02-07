@@ -31,11 +31,11 @@ func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
 		},
 		&goalsStorageMock{})
 
-	periodToExpectedGoalTitle := map[model.Period]string{
-		model.Year:    "2024",
-		model.Quarter: "2024 Q4",
-		model.Week:    "2024-12-09 W50",
-		model.Day:     "2024-12-10 Tuesday",
+	periodToExpectedGoalTitle := map[model.Period][]string{
+		model.Year:    {"2025", "2024"},
+		model.Quarter: {"2025 Q1", "2024 Q4"},
+		model.Week:    {"2024-12-16 W51", "2024-12-09 W50"},
+		model.Day:     {"2024-12-11 Wednesday", "2024-12-10 Tuesday"},
 	}
 
 	for period, expectedTitle := range periodToExpectedGoalTitle {
@@ -45,12 +45,16 @@ func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
 				t.Error("unexpected error:", err)
 			}
 
-			if len(actualTitle) != 1 {
-				t.Errorf("expected 1 goal, got %d", len(actualTitle))
+			if len(actualTitle) != 2 {
+				t.Errorf("expected 2 goals, got %d", len(actualTitle))
 			}
 
-			if actualTitle[0].Title() != expectedTitle {
-				t.Errorf("expected title %q, got %q", expectedTitle, actualTitle[0].Title())
+			if actualTitle[0].Title() != expectedTitle[0] {
+				t.Errorf("expected title %q, got %q", expectedTitle[0], actualTitle[0].Title())
+			}
+
+			if actualTitle[1].Title() != expectedTitle[1] {
+				t.Errorf("expected title %q, got %q", expectedTitle[1], actualTitle[1].Title())
 			}
 		})
 	}
