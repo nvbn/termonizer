@@ -41,6 +41,7 @@ func NewGoalsList(ctx context.Context, props GoalsListProps) *GoalsList {
 	l := &GoalsList{
 		GoalsListProps: props,
 		editorsCache:   editorsCache,
+		offset:         1,
 	}
 
 	l.initPrimitive(ctx)
@@ -66,7 +67,7 @@ func (l *GoalsList) ScrollFuture(ctx context.Context) {
 }
 
 func (l *GoalsList) ScrollNow(ctx context.Context) {
-	l.offset = 0
+	l.offset = 1
 	l.currentFocus = 0
 	l.render(ctx)
 }
