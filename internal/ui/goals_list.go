@@ -80,7 +80,7 @@ func (l *GoalsList) ScrollPast(ctx context.Context) {
 		log.Fatalf("failed to count goals: %v", err)
 	}
 
-	if l.offset == (amount - l.amountToShow()) {
+	if l.offset >= (amount - l.amountToShow()) {
 		return
 	}
 
@@ -112,11 +112,7 @@ func (l *GoalsList) getVisibleGoals(ctx context.Context) []model.Goal {
 		log.Fatalf("failed to find goals: %v", err)
 	}
 
-	if l.offset+l.amountToShow() <= len(goals) {
-		return goals[l.offset : l.offset+l.amountToShow()]
-	}
-
-	return goals
+	return goals[l.offset:min(l.offset+l.amountToShow(), len(goals))]
 }
 
 func (l *GoalsList) initPrimitive(ctx context.Context) {
