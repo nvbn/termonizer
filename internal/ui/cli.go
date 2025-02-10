@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const exitEscPressThreshold = time.Second
+
 type CLI struct {
 	app                *tview.Application
 	timeNow            func() time.Time
@@ -69,7 +71,7 @@ func (c *CLI) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 		log.Printf("hotkey: esc")
 
 		now := c.timeNow()
-		if now.Sub(c.lastEscapePress) < time.Second {
+		if now.Sub(c.lastEscapePress) < exitEscPressThreshold {
 			c.app.Stop()
 			return nil
 		}
@@ -78,6 +80,7 @@ func (c *CLI) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	if event.Key() == tcell.KeyCtrlC {
+		// avoids killing the app with ctrl+c but propagets it to other ui components
 		return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
 	}
 
