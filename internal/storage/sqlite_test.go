@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"github.com/google/uuid"
 	"github.com/nvbn/termonizer/internal/model"
 	"github.com/nvbn/termonizer/internal/utils"
@@ -11,7 +10,8 @@ import (
 )
 
 func TestSQLite_Goals(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
+
 	s, err := NewSQLite(ctx, ":memory:")
 	if err != nil {
 		t.Error("unexpected error:", err)
@@ -74,7 +74,8 @@ func TestSQLite_Goals(t *testing.T) {
 }
 
 func TestSQLite_Settings(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
+
 	s, err := NewSQLite(ctx, ":memory:")
 	if err != nil {
 		t.Error("unexpected error:", err)

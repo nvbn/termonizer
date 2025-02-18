@@ -23,7 +23,7 @@ func (m *goalsStorageMock) CountGoalsForPeriod(ctx context.Context, period int) 
 
 // TODO: make test better
 func TestGoalsRepository_FindForPeriod_Padding(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	r := NewGoalsRepository(
 		func() time.Time {

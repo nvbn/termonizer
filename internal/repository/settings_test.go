@@ -21,7 +21,9 @@ func (s *settingsStorageMock) UpdateSetting(ctx context.Context, setting model.S
 }
 
 func TestSettings_GetAmountForPeriod(t *testing.T) {
-	s, err := NewSettings(context.Background(), time.Now, &settingsStorageMock{})
+	ctx := t.Context()
+
+	s, err := NewSettings(ctx, time.Now, &settingsStorageMock{})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
