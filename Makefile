@@ -17,7 +17,7 @@ log:
 	tail -f debug.log
 
 sign-macos:
-	echo codesign -s $$(security find-identity -v -p codesigning | grep 'Developer ID Application' | awk '{ print $$2 }') -o runtime -v bin/termonizer && \
 	cd bin && \
+	codesign -s $$(security find-identity -v -p codesigning | grep 'Developer ID Application' | awk '{ print $$2 }') -o runtime -v termonizer && \
 	zip termonizer.zip termonizer && \
 	xcrun notarytool submit termonizer.zip --keychain-profile "notarization-profile" --wait
