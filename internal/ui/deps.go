@@ -15,3 +15,7 @@ type settingsRepository interface {
 	GetAmountForPeriod(period model.Period) int
 	SetAmountForPeriod(ctx context.Context, period model.Period, amount int) error
 }
+
+type aiClient interface {
+	Generate(ctx context.Context, prompt string) chan model.AiResponse
+}

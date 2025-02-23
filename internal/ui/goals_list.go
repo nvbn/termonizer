@@ -18,6 +18,7 @@ type GoalsListProps struct {
 	period             model.Period
 	goalsRepository    goalsRepository
 	settingsRepository settingsRepository
+	aiClient           aiClient
 	onFocus            func()
 }
 
@@ -228,6 +229,7 @@ func (l *GoalsList) render(ctx context.Context) {
 				timeNow:         l.timeNow,
 				goalsRepository: l.goalsRepository,
 				goal:            goal,
+				aiClient:        l.aiClient,
 				onFocus: func() {
 					// could be called during the first rendering
 					if pos, ok := l.idToPosition[goal.ID]; ok {

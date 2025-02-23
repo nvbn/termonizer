@@ -22,11 +22,15 @@ Some notes. This is just a placeholder in some opinionated format.
 
 const futureGoalEditorPlaceholder = `Goals and notes for the future`
 
+const goalEditorAiTimeout = 5 * time.Second
+
 type GoalEditorProps struct {
 	app             *tview.Application
 	timeNow         func() time.Time
 	goalsRepository goalsRepository
 	goal            model.Goal
+	aiClient        aiClient
+	amount          int
 	onFocus         func()
 }
 
@@ -72,36 +76,50 @@ func (e *GoalEditor) initPrimitive(ctx context.Context) {
 	})
 
 	p.SetFocusFunc(e.onFocus)
-	p.SetInputCapture(e.handleHotkeys)
+	p.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		return e.handleHotkeys(ctx, event)
+	})
 
 	e.Primitive = p
 }
 
-func (e *GoalEditor) handleList() bool {
+func (e *GoalEditor) findFinishedLine() *editorLine {
 	_, start, end := e.Primitive.GetSelection()
 	if start != end {
-		return false
+		return nil
 	}
 
 	content := e.Primitive.GetText()
 	if content == "" {
-		return false
+		return nil
 	}
 
 	lineStart := utils.FindLineStart(content, start)
-	if lineStart == len(content) || start == lineStart || content[lineStart] != '*' {
-		return false
+	if lineStart == len(content) || start == lineStart {
+		return nil
 	}
 
 	lineEnd := utils.FindLineEnd(content, lineStart)
-	lineContent := content[lineStart:lineEnd]
-	if strings.TrimRight(lineContent, " \t") == "*" {
-		e.Primitive.Replace(lineStart, lineEnd+1, "")
+
+	return &editorLine{
+		start:         lineStart,
+		end:           lineEnd,
+		editorContent: content,
+	}
+}
+
+func (e *GoalEditor) handleList(line *editorLine) bool {
+	if line.String()[0] != '*' {
+		return false
+	}
+
+	if strings.TrimRight(line.String(), " \t") == "*" {
+		e.Primitive.Replace(line.start, line.end+1, "")
 		return true
 	}
 
 	toInsert := "\n*"
-	if !(start < len(content) && content[start] == ' ') {
+	if !(line.start < len(line.editorContent) && line.editorContent[line.start] == ' ') {
 		toInsert += " "
 	}
 	e.Primitive.PasteHandler()(toInsert, nil)
@@ -109,8 +127,34 @@ func (e *GoalEditor) handleList() bool {
 	return true
 }
 
+func (e *GoalEditor) handleAi(ctx context.Context, line *editorLine) bool {
+	if line.String()[0] != '?' {
+		return false
+	}
+
+	log.Printf("ai question: %s", line.String())
+
+	question := line.String()[1:]
+
+	timeoutCtx, cancelTimeoutCtx := context.WithTimeout(ctx, goalEditorAiTimeout)
+	defer cancelTimeoutCtx()
+
+	for r := range e.aiClient.Generate(timeoutCtx, question) {
+		log.Printf("ai response: %+v", r)
+		if r.Error != nil {
+			log.Printf("ai error: %s", r.Error)
+			e.Primitive.PasteHandler()("ai died", nil)
+			return true
+		}
+
+		e.Primitive.PasteHandler()(r.Text, nil)
+	}
+
+	return true
+}
+
 // manual ctrl+c / ctrl+v / ctrl + x
-func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
+func (e *GoalEditor) handleHotkeys(ctx context.Context, event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlC {
 		log.Println("hotkey editor: ctrl c")
 		selected, _, _ := e.Primitive.GetSelection()
@@ -141,8 +185,15 @@ func (e *GoalEditor) handleHotkeys(event *tcell.EventKey) *tcell.EventKey {
 
 	if event.Key() == tcell.KeyEnter {
 		log.Println("hotkey editor: enter")
-		if e.handleList() {
-			return nil
+		finishedLine := e.findFinishedLine()
+		if finishedLine != nil {
+			if e.handleList(finishedLine) {
+				return nil
+			}
+
+			if e.handleAi(ctx, finishedLine) {
+				return nil
+			}
 		}
 	}
 

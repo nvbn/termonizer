@@ -4,18 +4,23 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/nvbn/termonizer/internal/ai"
 	"github.com/nvbn/termonizer/internal/repository"
 	"github.com/nvbn/termonizer/internal/storage"
 	"github.com/nvbn/termonizer/internal/ui"
 	"golang.design/x/clipboard"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"time"
 )
 
 var dbPath = flag.String("db", "${HOME}/.termonizer.db", "path to the database")
 var debug = flag.String("debug", "", "debug output path")
+
+var ollamaUrl = flag.String("ollama-url", "http://localhost:11434/api/generate", "ollama url")
+var ollamaModel = flag.String("ollama-model", "llama3.2", "ollama model")
 
 var hotkeysDoc = `
 Esc Esc - exit
@@ -85,7 +90,8 @@ func main() {
 		panic(err)
 	}
 
-	if err = ui.NewCLI(ctx, time.Now, goalsRepository, settingsRepository).Run(); err != nil {
+	aiClient := ai.NewClient(http.DefaultClient, *ollamaUrl, *ollamaModel)
+	if err = ui.NewCLI(ctx, time.Now, goalsRepository, settingsRepository, aiClient).Run(); err != nil {
 		panic(err)
 	}
 }

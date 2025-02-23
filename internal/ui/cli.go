@@ -16,6 +16,7 @@ type CLI struct {
 	timeNow            func() time.Time
 	goalsRepository    goalsRepository
 	settingsRepository settingsRepository
+	aiClient           aiClient
 	container          *tview.Flex
 	panels             []*PeriodPanel
 	currentFocus       int
@@ -27,11 +28,13 @@ func NewCLI(
 	timeNow func() time.Time,
 	goalsRepository goalsRepository,
 	settingsRepository settingsRepository,
+	aiClient aiClient,
 ) *CLI {
 	c := &CLI{
 		goalsRepository:    goalsRepository,
 		settingsRepository: settingsRepository,
 		timeNow:            timeNow,
+		aiClient:           aiClient,
 	}
 	c.init(ctx)
 	return c
@@ -59,6 +62,7 @@ func (c *CLI) render(ctx context.Context) {
 			period:             period,
 			goalsRepository:    c.goalsRepository,
 			settingsRepository: c.settingsRepository,
+			aiClient:           c.aiClient,
 			onFocus:            func() { c.currentFocus = n },
 		})
 		c.container.AddItem(panel.Primitive, 0, 1, false)

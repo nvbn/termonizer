@@ -13,6 +13,7 @@ type PeriodPanelProps struct {
 	period             model.Period
 	goalsRepository    goalsRepository
 	settingsRepository settingsRepository
+	aiClient           aiClient
 	onFocus            func()
 }
 
@@ -33,6 +34,7 @@ func NewPeriodPanel(ctx context.Context, props PeriodPanelProps) *PeriodPanel {
 			period:             props.period,
 			goalsRepository:    props.goalsRepository,
 			settingsRepository: props.settingsRepository,
+			aiClient:           props.aiClient,
 			onFocus:            props.onFocus,
 		}),
 	}
